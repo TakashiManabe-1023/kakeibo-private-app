@@ -3,6 +3,12 @@
 
 const appScrollPositions = { income: 0, expense: 0 };
 
+function bindMediaQueryChange(query, handler) {
+  const media = window.matchMedia(query);
+  if (typeof media.addEventListener === "function") media.addEventListener("change", handler);
+  else if (typeof media.addListener === "function") media.addListener(handler);
+}
+
 function bindAppModeEvents() {
   document.querySelectorAll("[data-app-mode]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -15,8 +21,8 @@ function bindAppModeEvents() {
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeMobileNav();
   });
-  window.matchMedia("(min-width: 769px)").addEventListener("change", closeMobileNav);
-  window.matchMedia("(max-width: 768px)").addEventListener("change", () => {
+  bindMediaQueryChange("(min-width: 769px)", closeMobileNav);
+  bindMediaQueryChange("(max-width: 768px)", () => {
     if (typeof appMode === "string" && appMode === "expense" && typeof renderMaster === "function") renderMaster();
   });
 }
