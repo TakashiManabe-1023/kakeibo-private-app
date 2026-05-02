@@ -1262,6 +1262,12 @@ function renderExpenseData() {
 }
 
 
+function parkDetailPanelBeforeMasterRender() {
+  const panel = byId("detailPanel");
+  const layout = document.querySelector(".master-layout");
+  if (panel && layout && panel.closest("#masterCards")) layout.appendChild(panel);
+}
+
 function renderMaster() {
   renderExpensePersonSelect();
   const rows = filteredSortedRows();
@@ -1270,6 +1276,7 @@ function renderMaster() {
   if (byId("masterCount")) byId("masterCount").textContent = `${rows.length}件表示`;
   renderPendingApplyPanel();
   renderColumnFilters();
+  parkDetailPanelBeforeMasterRender();
   const useCardView = window.matchMedia("(max-width: 768px)").matches;
   const effectiveViewMode = useCardView ? "cards" : masterViewMode;
   document.querySelectorAll("[data-master-view]").forEach((button) => {

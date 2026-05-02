@@ -12,8 +12,9 @@ function bindMediaQueryChange(query, handler) {
 function bindAppModeEvents() {
   document.querySelectorAll("[data-app-mode]").forEach((button) => {
     button.addEventListener("click", () => {
-      switchAppMode(button.dataset.appMode);
+      const nextMode = button.dataset.appMode;
       closeMobileNav();
+      requestAnimationFrame(() => switchAppMode(nextMode));
     });
   });
   byId("mobileNavToggle")?.addEventListener("click", toggleMobileNav);
