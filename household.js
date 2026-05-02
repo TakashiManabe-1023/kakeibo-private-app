@@ -1497,7 +1497,7 @@ function renderDetailPanel() {
       <h3 title="${esc(view.name || "名称未設定")}">${esc(view.name || "名称未設定")}</h3>
       <div class="detail-title-actions">
         ${statusPill(rowStatus(item))}
-        ${isMobileExpenseLayout() ? '<button type="button" id="closeDetailPanel" class="subtle-button detail-close-button">閉じる</button>' : ""}
+        ${isMobileExpenseLayout() && !editing ? '<button type="button" id="closeDetailPanel" class="subtle-button detail-close-button">閉じる</button>' : ""}
         ${editing ? "" : '<button type="button" id="toggleRowEdit">編集</button>'}
       </div>
     </div>

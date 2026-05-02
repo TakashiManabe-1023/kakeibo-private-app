@@ -4859,3 +4859,152 @@ th {
     flex: 1 1 100px;
   }
 }
+
+/* Final navigation and iPhone card polish. */
+.nav-head {
+  height: auto;
+  gap: 8px;
+}
+
+.nav-brand {
+  margin: 0;
+  color: #f8faf8;
+  font-size: 21px;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.nav-head .eyebrow,
+#navTitle,
+#navCopy {
+  display: none !important;
+}
+
+.nav-updated {
+  margin-top: 0;
+}
+
+.payroll-manage-cards {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  body.mobile-nav-open .mobile-nav-toggle {
+    left: min(calc(86vw - 58px), 262px);
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .nav {
+    padding-top: 22px;
+  }
+
+  .nav-brand {
+    padding-right: 54px;
+    font-size: 20px;
+  }
+
+  .nav-head {
+    padding-right: 0;
+  }
+
+  .payroll-record-list {
+    display: none !important;
+  }
+
+  .payroll-manage-cards {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .payroll-manage-card {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 8px 20px rgba(23, 53, 46, 0.07);
+  }
+
+  .payroll-manage-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .payroll-manage-card-head strong {
+    font-size: 15px;
+  }
+
+  .payroll-manage-card-head span {
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .payroll-manage-card dl {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .payroll-manage-card dl div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .payroll-manage-card dt {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .payroll-manage-card dd {
+    margin: 0;
+    text-align: right;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .payroll-manage-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .expense-card-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px 10px;
+    text-align: left;
+  }
+
+  .expense-card-row > span:first-child,
+  .expense-card-meta {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .expense-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .expense-card-meta .cost-text,
+  .expense-card-meta > span:first-child {
+    margin-right: auto;
+  }
+
+  .detail-title-actions {
+    justify-content: space-between;
+    width: 100%;
+  }
+}

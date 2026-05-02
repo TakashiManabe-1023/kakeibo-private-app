@@ -50,8 +50,8 @@ function switchAppMode(mode) {
     },
   }[appMode];
 
-  byId("navTitle").textContent = modeText.title;
-  byId("navCopy").textContent = modeText.copy;
+  if (byId("navTitle")) byId("navTitle").textContent = modeText.title;
+  if (byId("navCopy")) byId("navCopy").textContent = modeText.copy;
   document.querySelectorAll("[data-app-mode]").forEach((button) => {
     button.classList.toggle("active", button.dataset.appMode === appMode);
   });

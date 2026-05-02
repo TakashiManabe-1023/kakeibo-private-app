@@ -1346,6 +1346,24 @@ function payrollRenderManage() {
     const calc = payrollCalc(record.values);
     return `<tr><td>${esc(payrollFormatYmJa(record.ym))}</td><td class="amount">${payrollAmount(calc.grossTotal)}</td><td class="amount">${payrollAmount(calc.netTotal)}</td><td class="amount">${payrollAmount(calc.deductionTotal)}</td><td><button class="subtle-button" type="button" data-payroll-load="${esc(record.ym)}">表示</button><button class="subtle-button danger" type="button" data-payroll-delete="${esc(record.ym)}">削除</button></td></tr>`;
   }).join("");
+  const cards = records.map((record) => {
+    const calc = payrollCalc(record.values);
+    return `
+      <article class="payroll-manage-card">
+        <div class="payroll-manage-card-head">
+          <strong>${esc(payrollFormatYmJa(record.ym))}</strong>
+          <span>${payrollAmount(calc.netTotal)}</span>
+        </div>
+        <dl>
+          <div><dt>総支給</dt><dd>${payrollAmount(calc.grossTotal)}</dd></div>
+          <div><dt>控除</dt><dd>${payrollAmount(calc.deductionTotal)}</dd></div>
+        </dl>
+        <div class="payroll-manage-card-actions">
+          <button class="subtle-button" type="button" data-payroll-load="${esc(record.ym)}">表示</button>
+          <button class="subtle-button danger" type="button" data-payroll-delete="${esc(record.ym)}">削除</button>
+        </div>
+      </article>`;
+  }).join("");
   byId("incomeManagePanel").innerHTML = `
     <div class="table-wrap payroll-record-list">
       <table class="imported-table">
@@ -1353,6 +1371,7 @@ function payrollRenderManage() {
         <tbody>${rows}</tbody>
       </table>
     </div>
+    <div class="payroll-manage-cards">${cards || '<div class="external-empty-card">登録データがありません。</div>'}</div>
     <div class="payroll-manage-footer">
       ${payrollSafetyPanelHtml()}
       <button id="payrollExportExcel" type="button">Excel出力</button>
