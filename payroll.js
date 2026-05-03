@@ -605,7 +605,7 @@ function payrollRenderInput() {
   const ym = payrollState.registrationYm;
   const hasYm = !!ym;
   const method = payrollState.inputMethod;
-  const showInputItems = hasYm && !!method;
+  const showInputItems = hasYm && (method === "manual" || (method === "photo" && payrollState.inputStarted));
   const hasAmount = Object.values(values).some((value) => payrollNumber(value) !== 0);
   const stepContext = { hasYm, method, hasAmount };
   const previousYm = payrollPreviousYm(ym);
@@ -662,20 +662,20 @@ function payrollRenderInput() {
         </div>
       </section>
     </div>
-    ${showInputItems ? "" : '<div class="empty-state payroll-input-placeholder">入力方法を選ぶと、入力項目が表示されます。</div>'}
     <div class="table-wrap income-input-table ${showInputItems ? "" : "hidden"}">
       <table>
         <thead><tr><th>分類</th><th>項目</th><th>金額</th></tr></thead>
         <tbody>${inputRows}<tr class="section-row"><td colspan="3">自動計算</td></tr>${calcRows}</tbody>
       </table>
     </div>
+    ${showInputItems ? `
     <details id="payrollSummaryDetails" class="payroll-collapsible payroll-summary-panel payroll-summary-trend-panel" ${payrollState.inputSummaryOpen ? "open" : ""}>
       <summary><span>サマリー</span><b>${esc(payrollInputSummaryLabel(calc))}</b></summary>
       <div id="payrollInputKpis" class="income-kpis payroll-input-kpis">
         ${payrollInputKpiHtml(calc)}
       </div>
       ${payrollInputMiniChartHtml()}
-    </details>
+    </details>` : ""}
     <section class="flow-step payroll-save-panel ${payrollStepClass(3, stepContext)}">
       <span>3</span>
       <div>

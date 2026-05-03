@@ -5393,3 +5393,119 @@ th {
     min-height: 44px;
   }
 }
+
+
+/* iPhone speed and layout polish */
+.payroll-ym-row {
+  gap: 14px;
+}
+
+.payroll-ym-row button {
+  min-height: 42px;
+  border-radius: 10px;
+  padding-inline: 18px;
+}
+
+.payroll-input-placeholder {
+  display: none !important;
+}
+
+.expense-card-row {
+  position: relative;
+}
+
+.expense-card-meta {
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: end;
+  gap: 4px;
+  min-width: 118px;
+}
+
+.expense-card-meta .cost-main,
+.expense-card-meta > span:first-child,
+.expense-card-meta b {
+  font-weight: 800;
+}
+
+
+.maintenance-chip,
+.candidate-flag {
+  min-height: 18px;
+  padding: 0 7px;
+  border: 1px solid rgba(180, 120, 20, 0.32);
+  background: rgba(255, 248, 235, 0.88);
+  color: #7a4d05;
+  font-size: 10px;
+  line-height: 18px;
+}
+
+.expense-card-row .maintenance-chip {
+  order: 3;
+  justify-self: end;
+}
+
+@media (max-width: 768px) {
+  .payroll-ym-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .payroll-ym-row button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .expense-category-card,
+  .payroll-manage-card,
+  .external-mobile-card,
+  .detail-panel,
+  .detail-candidate-card {
+    box-shadow: 0 3px 10px rgba(16, 45, 35, 0.05) !important;
+  }
+
+  .expense-card-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    min-height: 58px;
+    padding: 10px 12px;
+  }
+
+  .expense-card-row > span:first-child {
+    min-width: 0;
+  }
+
+  .expense-card-row strong {
+    max-width: 100%;
+  }
+
+  .expense-card-meta {
+    min-width: 92px;
+    max-width: 118px;
+    align-self: center;
+  }
+
+  .expense-card-meta .mini-badge:not(.maintenance-chip) {
+    display: none;
+  }
+
+  .expense-card-meta .cost-sub,
+  .expense-card-meta small {
+    font-size: 10px;
+  }
+
+  .maintenance-chip {
+    font-size: 10px;
+    padding-inline: 6px;
+  }
+
+  .master-cards,
+  .expense-card-items {
+    contain: layout paint;
+  }
+
+  .expense-card-row,
+  .detail-panel {
+    -webkit-tap-highlight-color: transparent;
+  }
+}

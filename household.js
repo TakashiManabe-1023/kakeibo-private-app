@@ -1,5 +1,7 @@
 ﻿// household.js
 
+let maintenanceCandidateCache = null;
+
 function categoryText(item) {
   return String(item?.category || "");
 }
@@ -253,17 +255,36 @@ function notifyLinkGroupCandidates(context = "") {
 }
 
 
+function invalidateMaintenanceCandidateCache() {
+  maintenanceCandidateCache = null;
+}
+
+function maintenanceCandidateIndex() {
+  if (maintenanceCandidateCache) return maintenanceCandidateCache;
+  const active = buildUpdateCandidates().filter((candidate) => ["pending", "hold"].includes(candidateDisplayStatus(candidate)) && candidateTargetItem(candidate));
+  const byItem = new Map();
+  active.forEach((candidate) => {
+    const item = candidateTargetItem(candidate);
+    if (!item) return;
+    if (!byItem.has(item.id)) byItem.set(item.id, []);
+    byItem.get(item.id).push(candidate);
+  });
+  const pending = active.filter((candidate) => candidateDisplayStatus(candidate) === "pending");
+  maintenanceCandidateCache = { active, byItem, pending };
+  return maintenanceCandidateCache;
+}
+
 function activeMaintenanceCandidates() {
-  return buildUpdateCandidates().filter((candidate) => ["pending", "hold"].includes(candidateDisplayStatus(candidate)) && candidateTargetItem(candidate));
+  return maintenanceCandidateIndex().active;
 }
 
 function itemMaintenanceCandidates(item) {
   if (!item) return [];
-  return activeMaintenanceCandidates().filter((candidate) => candidateTargetItem(candidate)?.id === item.id);
+  return maintenanceCandidateIndex().byItem.get(item.id) || [];
 }
 
 function pendingMaintenanceCandidates() {
-  return buildUpdateCandidates().filter((candidate) => candidateDisplayStatus(candidate) === "pending" && candidateTargetItem(candidate));
+  return maintenanceCandidateIndex().pending;
 }
 
 function renderMaintenanceNotice() {
@@ -271,7 +292,7 @@ function renderMaintenanceNotice() {
   if (!notice) return;
   const count = pendingMaintenanceCandidates().length;
   notice.classList.toggle("hidden", !count);
-  notice.innerHTML = count ? '<span>更新確認が必要な項目 ' + count + '件</span><small>各カードの「更新候補あり」から確認できます。</small>' : "";
+  notice.innerHTML = count ? '<span>更新確認が必要な項目 ' + count + '件</span><small>各カードの「更新」から確認できます。</small>' : "";
 }
 
 function renderDetailMaintenanceCandidates(item) {
@@ -796,6 +817,7 @@ function updateCandidateStatus(id, status) {
   if ((status === "hold" || status === "ignored") && !window.confirm(`この更新候補を「${labels[status]}」にしますか？`)) return;
   candidateStatus[id] = { status, at: new Date().toISOString() };
   saveCandidateStatus();
+  invalidateMaintenanceCandidateCache();
   renderMaster();
   renderExpenseAnalysis();
   renderExpenseSummary();
@@ -959,6 +981,7 @@ function applyPendingUpdateCandidate() {
   selectedId = item.id;
   saveMaster();
   saveCandidateStatus();
+  invalidateMaintenanceCandidateCache();
   closeCandidateApplyModal();
   renderMaster();
   renderExpenseAnalysis();
@@ -1330,6 +1353,7 @@ function parkDetailPanelBeforeMasterRender() {
 }
 
 function renderMaster() {
+  invalidateMaintenanceCandidateCache();
   renderExpensePersonSelect();
   const rows = filteredSortedRows();
   const mobileExpenseLayout = isMobileExpenseLayout();
@@ -1348,8 +1372,8 @@ function renderMaster() {
   });
   byId("masterCards")?.classList.toggle("hidden", effectiveViewMode !== "cards");
   byId("masterList")?.classList.toggle("hidden", effectiveViewMode !== "list");
-  if (byId("masterCards")) byId("masterCards").innerHTML = renderMasterCards(rows);
-  byId("masterRows").innerHTML = rows.map(renderMasterRow).join("");
+  if (byId("masterCards")) byId("masterCards").innerHTML = effectiveViewMode === "cards" ? renderMasterCards(rows) : "";
+  if (byId("masterRows")) byId("masterRows").innerHTML = effectiveViewMode === "list" ? rows.map(renderMasterRow).join("") : "";
   renderDetailPanel();
   positionDetailPanel();
 }
@@ -1386,7 +1410,7 @@ function renderMasterCardItem(item) {
   const aliasFlag = externalAliases(item).length ? '<span class="mini-badge">外部別名</span>' : "";
   const essentialFlag = `<span class="mini-badge ${item.essential ? "essential" : "optional"}">${item.essential ? "必須" : "任意"}</span>`;
   const reducibleFlag = `<span class="mini-badge ${item.reducible ? "reducible" : "hard-reduce"}">${item.reducible ? "見直し可" : "削減困難"}</span>`;
-  const candidateFlag = itemMaintenanceCandidates(item).length ? '<span class="mini-badge attention">更新候補あり</span>' : "";
+  const candidateFlag = itemMaintenanceCandidates(item).length ? '<span class="mini-badge maintenance-chip" title="更新候補あり" aria-label="更新候補あり">更新</span>' : "";
   return `
     <button class="expense-card-row ${selected}" type="button" data-select-id="${esc(item.id)}">
       <span>
@@ -1437,7 +1461,7 @@ function renderMasterRow(item) {
   const aliasFlag = externalAliases(item).length ? '<span class="alias-flag" title="外部データ別名あり">外</span>' : "";
   const incomeFlag = incomeLinks(item).length ? '<span class="alias-flag income-link-flag" title="収入管理と紐づいています">収入連携済み</span>' : "";
   const judgmentFlags = `<span class="mini-badge ${item.essential ? "essential" : "optional"}">${item.essential ? "必須" : "任意"}</span><span class="mini-badge ${item.reducible ? "reducible" : "hard-reduce"}">${item.reducible ? "見直し可" : "削減困難"}</span>`;
-  const candidateFlag = itemMaintenanceCandidates(item).length ? '<span class="alias-flag candidate-flag" title="更新候補あり">更新候補あり</span>' : "";
+  const candidateFlag = itemMaintenanceCandidates(item).length ? '<span class="alias-flag candidate-flag" title="更新候補あり" aria-label="更新候補あり">更新</span>' : "";
   return `
     <tr class="${selected} ${pending || reflected}" data-row-id="${esc(item.id)}">
       <td>${statusPill(rowStatus(item))}</td>
@@ -1713,7 +1737,7 @@ function selectRow(event) {
   selectedId = id;
   renderMaster();
   if (isMobileExpenseLayout()) {
-    requestAnimationFrame(() => byId("detailPanel")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    requestAnimationFrame(() => byId("detailPanel")?.scrollIntoView({ block: "nearest" }));
   }
 }
 
