@@ -48,6 +48,82 @@ function closeMobileNav() {
   byId("mobileNavBackdrop")?.classList.add("hidden");
 }
 
+function overallMetricsForApp() {
+  if (typeof expenseSummaryMetrics === "function") return expenseSummaryMetrics();
+  return { income: 0, expense: 0, saving: 0, surplus: 0, fixedRatio: 0, savingRatio: 0, health: "-", pendingCount: 0, attentionCount: 0 };
+}
+
+function appMetricCard(label, value, note = "") {
+  return `<div class="summary-card"><span>${esc(label)}</span><strong>${esc(value)}</strong>${note ? `<small>${esc(note)}</small>` : ""}</div>`;
+}
+
+function renderSummaryPanel() {
+  const panel = byId("panel-summary");
+  if (!panel) return;
+  const metrics = overallMetricsForApp();
+  panel.innerHTML = `
+    <article class="panel income-native unified-summary-panel">
+      <div class="income-topbar"><div><h3>サマリー</h3><p>収入と支出から家計全体の現在地を確認します。</p></div></div>
+      <section class="analysis-summary">
+        ${appMetricCard("世帯収入", yen(metrics.income))}
+        ${appMetricCard("支出合計", yen(metrics.expense))}
+        ${appMetricCard("貯蓄・投資", yen(metrics.saving))}
+        ${appMetricCard("月次余力", yen(metrics.surplus), metrics.health)}
+        ${appMetricCard("固定費率", percent(metrics.fixedRatio))}
+        ${appMetricCard("貯蓄率", percent(metrics.savingRatio))}
+      </section>
+      <section class="analysis-card analysis-card-wide">
+        <h4>家計判定</h4>
+        <p>${esc(typeof expenseHealthComment === "function" ? expenseHealthComment(metrics.health) : "収入と支出の登録状況を確認してください。")}</p>
+      </section>
+    </article>`;
+}
+
+function renderUnifiedAnalysis() {
+  const panel = byId("panel-analysis");
+  if (!panel) return;
+  const metrics = overallMetricsForApp();
+  const incomeChart = typeof payrollDetailedChartHtml === "function" ? payrollDetailedChartHtml() : '<div class="empty-state">収入データがありません。</div>';
+  const review = typeof reviewTopItems === "function" ? reviewTopItems().slice(0, 5) : [];
+  const expenseTables =
+    typeof analysisTable === "function" && typeof enabledItems === "function" && typeof sumBy === "function" && typeof compactTopRows === "function"
+      ? `<div class="analysis-grid expense-analysis-grid">
+          ${analysisTable("カテゴリ別支出", compactTopRows(sumBy(enabledItems().filter((item) => item.flow === "expense"), (item) => item.category, (item) => item.monthlyAmount)))}
+          ${analysisTable("固定/変動", compactTopRows(sumBy(enabledItems().filter((item) => item.flow === "expense"), (item) => displayValue("nature", item.nature), (item) => item.monthlyAmount)))}
+        </div>`
+      : "";
+  panel.innerHTML = `
+    <article class="panel income-native unified-analysis-panel">
+      <div class="income-topbar"><div><h3>分析</h3><p>収入・支出・見直し候補を横断して確認します。</p></div></div>
+      <section class="analysis-card analysis-card-wide">
+        <h4>全体分析</h4>
+        <div class="analysis-summary">
+          ${appMetricCard("世帯収入", yen(metrics.income))}
+          ${appMetricCard("支出合計", yen(metrics.expense))}
+          ${appMetricCard("当月収支", yen(metrics.surplus), metrics.health)}
+          ${appMetricCard("固定費率", percent(metrics.fixedRatio))}
+          ${appMetricCard("貯蓄率", percent(metrics.savingRatio))}
+          ${appMetricCard("更新確認", `${metrics.pendingCount || 0}件`)}
+        </div>
+      </section>
+      <section class="analysis-card analysis-card-wide">
+        <h4>収入分析</h4>
+        ${incomeChart}
+      </section>
+      <section class="analysis-card analysis-card-wide">
+        <h4>支出分析</h4>
+        ${expenseTables || '<div class="empty-state">支出データがありません。</div>'}
+      </section>
+      <section class="analysis-card analysis-card-wide">
+        <div class="analysis-card-head"><h4>見直し候補</h4><button type="button" data-unified-open-expense>支出管理で確認</button></div>
+        <div class="review-top-list">
+          ${review.length ? review.map((row, index) => `<div class="review-row"><strong>${index + 1}. ${esc(row.item.name || "名称未設定")}</strong><span>${yen(row.item.monthlyAmount)} / ${esc(row.reasons.join("・"))}</span></div>`).join("") : '<div class="empty-state">優先的に見直す候補はありません。</div>'}
+        </div>
+      </section>
+    </article>`;
+  if (typeof payrollBindChartEvents === "function") payrollBindChartEvents();
+  panel.querySelector("[data-unified-open-expense]")?.addEventListener("click", () => switchAppMode("expense"));
+}
 function bindMobileNavSwipe() {
   let startX = 0;
   let startY = 0;
@@ -77,15 +153,23 @@ function bindMobileNavSwipe() {
 
 function switchAppMode(mode) {
   if (typeof appMode === "string") appScrollPositions[appMode] = window.scrollY || 0;
-  appMode = mode === "expense" ? "expense" : "income";
+  appMode = ["summary", "income", "expense", "analysis"].includes(mode) ? mode : "income";
   const modeText = {
+    summary: {
+      title: "サマリー",
+      copy: "家計全体の現在地を確認します。",
+    },
     income: {
       title: "収入管理",
-      copy: "収入と支出を管理し、家計全体の状況を確認します。",
+      copy: "月収登録と給与データ管理を行います。",
     },
     expense: {
       title: "支出管理",
       copy: "支出項目を整え、外部データを参照します。",
+    },
+    analysis: {
+      title: "分析",
+      copy: "収入と支出を横断して確認します。",
     },
   }[appMode];
 
@@ -97,10 +181,14 @@ function switchAppMode(mode) {
   document.querySelectorAll(".expense-view").forEach((element) => {
     element.classList.toggle("hidden", appMode !== "expense");
   });
+  byId("panel-summary")?.classList.toggle("hidden", appMode !== "summary");
+  byId("panel-analysis")?.classList.toggle("hidden", appMode !== "analysis");
   byId("panel-income")?.classList.toggle("hidden", appMode !== "income");
   renderHeader();
+  if (appMode === "summary") renderSummaryPanel();
   if (appMode === "income") mountIncomeManagement();
   if (appMode === "expense") renderExpenseVisible();
+  if (appMode === "analysis") renderUnifiedAnalysis();
   requestAnimationFrame(() => window.scrollTo(0, appScrollPositions[appMode] || 0));
 }
 
@@ -129,6 +217,7 @@ window.startHouseholdApp = init;
 if (typeof window.householdAuthPassed === "function" && window.householdAuthPassed()) {
   init();
 }
+
 
 
 
