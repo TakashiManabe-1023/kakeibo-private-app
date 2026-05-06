@@ -311,7 +311,7 @@ function renderHelp() {
         <h5>目的</h5><p>誤操作や復元ミスに備え、現在のデータを戻せる状態にします。</p>
         <h5>できること</h5><ul><li>収入、支出、外部取り込み、設定を1つのJSONとしてバックアップできます。</li><li>復元前に現在データを自動退避します。</li><li>不正なバックアップJSONは既存データを壊さず拒否します。</li><li>保存や反映前にスナップショットを残します。</li></ul>
         <h5>操作手順</h5><ol><li>設定を開きます。</li><li>バックアップを押してJSONを保存します。</li><li>復元する場合は復元を押し、対象ファイルを選びます。</li><li>確認内容を読んでから実行します。</li></ol>
-        <div class="help-note"><strong>注意点</strong><span>ブラウザのlocalStorageに保存しているため、ブラウザデータ削除の前には必ずバックアップしてください。</span></div>
+        <div class="help-note"><strong>注意点</strong><span>GitHub Pagesはアプリ本体を配信する場所です。登録データはこの端末のSafari/ブラウザ内に保存されるため、GitHub更新前やSafariデータ削除前には必ずバックアップしてください。ブラウザ変更やサイトデータ削除を行うと、データが見えなくなることがあります。</span></div>
         <p class="help-miss"><strong>よくあるミス：</strong>古いバックアップで現在のデータを上書きすること。復元前に日付を確認してください。</p>
       </section>
 
@@ -381,6 +381,8 @@ function renderSettings() {
   if (name) name.value = typeof payrollProfileLabel === "function" ? payrollProfileLabel(profile?.value) : "";
   byId("categoryOptions").value = (optionLists.category || []).join("\n");
   renderLinkGroupSettings();
+  const storagePanel = byId("storageStatusPanel");
+  if (storagePanel && typeof storageStatusHtml === "function") storagePanel.innerHTML = storageStatusHtml();
 }
 
 let editingLinkGroupId = null;

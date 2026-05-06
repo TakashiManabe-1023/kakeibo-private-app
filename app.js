@@ -261,6 +261,7 @@ function init() {
   window.householdAppStarted = true;
   data = window.HOUSEHOLD_DATA;
   if (!data) throw new Error("家計データを読み込めませんでした。");
+  migrateLegacyStorage();
 
   loadMaster();
   loadOptions();

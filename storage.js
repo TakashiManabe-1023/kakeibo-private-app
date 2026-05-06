@@ -13,6 +13,40 @@ const HOUSEHOLD_SNAPSHOT_KEY = "household-maintenance-snapshots-v1";
 const LINK_GROUPS_KEY = "household-maintenance-link-groups-v1";
 const FULL_BACKUP_SCHEMA_VERSION = 1;
 const FULL_BACKUP_AUTO_RESTORE_KEY = "household-maintenance-full-backup-before-restore-v1";
+const STORAGE_DIAGNOSTIC_KEYS = [
+  STORAGE_KEY,
+  OPTION_STORAGE_KEY,
+  CANDIDATE_STATUS_KEY,
+  IMPORT_STORAGE_KEY,
+  MASTER_UPDATED_KEY,
+  HOUSEHOLD_SNAPSHOT_KEY,
+  LINK_GROUPS_KEY,
+  FULL_BACKUP_AUTO_RESTORE_KEY,
+  "positivePayrollActiveProfile",
+  "positivePayrollProfileName_primary",
+  "positivePayrollProfileName_secondary",
+  "positivePayrollLastSaved_primary",
+  "positivePayrollLastSaved_secondary",
+  "payrollUserRecords",
+  "payrollUserRecords_secondary",
+  "payrollDeletedMonths",
+  "payrollDeletedMonths_secondary",
+  "positivePayrollSnapshots_primary",
+  "positivePayrollSnapshots_secondary",
+  "positivePayrollAutoBackup_primary",
+  "positivePayrollAutoBackup_secondary",
+];
+const LEGACY_STORAGE_KEYS = {
+  [STORAGE_KEY]: ["household-maintenance-master-v2", "household-maintenance-master-v1", "householdMaster", "expenseMaster"],
+  [OPTION_STORAGE_KEY]: ["household-maintenance-options-v1", "householdOptions"],
+  [CANDIDATE_STATUS_KEY]: ["household-maintenance-candidate-status-v1", "candidateStatus"],
+  [IMPORT_STORAGE_KEY]: ["household-maintenance-imported-rows", "importedRows", "externalImportedRows", "moneyForwardImportedRows", "rakutenImportedRows"],
+  [LINK_GROUPS_KEY]: ["household-link-groups", "linkGroups"],
+  payrollUserRecords: ["positivePayrollUserRecords", "payrollRecords", "payrollRecords_primary"],
+  payrollUserRecords_secondary: ["positivePayrollUserRecords_secondary", "payrollRecords_secondary"],
+  payrollDeletedMonths: ["positivePayrollDeletedMonths", "deletedMonths"],
+  payrollDeletedMonths_secondary: ["positivePayrollDeletedMonths_secondary", "deletedMonths_secondary"],
+};
 
 let data = null;
 let master = [];
@@ -43,6 +77,76 @@ let returnExternalTab = null;
 let importEditMode = false;
 let appMode = "summary";
 
+function storageHasUsableValue(key) {
+  const raw = localStorage.getItem(key);
+  if (raw === null || raw === undefined || raw === "") return false;
+  try {
+    const value = JSON.parse(raw);
+    if (Array.isArray(value)) return value.length > 0;
+    if (value && typeof value === "object") return Object.keys(value).length > 0;
+    return value !== null && value !== "";
+  } catch {
+    return true;
+  }
+}
+
+function copyLegacyStorageValue(targetKey, legacyKeys = []) {
+  if (storageHasUsableValue(targetKey)) return false;
+  const legacyKey = legacyKeys.find((key) => storageHasUsableValue(key));
+  if (!legacyKey) return false;
+  localStorage.setItem(targetKey, localStorage.getItem(legacyKey));
+  return true;
+}
+
+function migrateLegacyStorage() {
+  Object.entries(LEGACY_STORAGE_KEYS).forEach(([targetKey, legacyKeys]) => copyLegacyStorageValue(targetKey, legacyKeys));
+}
+
+function storageCount(value) {
+  if (Array.isArray(value)) return value.length;
+  if (value && typeof value === "object") return Object.keys(value).length;
+  return value ? 1 : 0;
+}
+
+function storageStatusSummary() {
+  const imports = normalizeStoredImportedRows(readImportedRowsStorage());
+  const payrollPrimary = readArrayStorage("payrollUserRecords", []);
+  const payrollSecondary = readArrayStorage("payrollUserRecords_secondary", []);
+  const masterObject = readObjectStorage(STORAGE_KEY, {});
+  const linkRows = readArrayStorage(LINK_GROUPS_KEY, []);
+  const moneyForwardRows = imports.filter((row) => normalizeStoredImportSource(row) === "moneyforward");
+  const rakutenRows = imports.filter((row) => normalizeStoredImportSource(row) === "rakuten");
+  return {
+    keys: [...STORAGE_DIAGNOSTIC_KEYS],
+    incomeRecords: payrollPrimary.length + payrollSecondary.length,
+    incomePrimary: payrollPrimary.length,
+    incomeSecondary: payrollSecondary.length,
+    expenseItems: storageCount(masterObject),
+    importedRows: imports.length,
+    moneyForwardRows: moneyForwardRows.length,
+    rakutenRows: rakutenRows.length,
+    linkGroups: linkRows.length,
+    candidateStatus: storageCount(readObjectStorage(CANDIDATE_STATUS_KEY, {})),
+    householdSnapshots: readArrayStorage(HOUSEHOLD_SNAPSHOT_KEY, []).length,
+    payrollSnapshots: readArrayStorage("positivePayrollSnapshots_primary", []).length + readArrayStorage("positivePayrollSnapshots_secondary", []).length,
+  };
+}
+
+function storageStatusHtml() {
+  const summary = storageStatusSummary();
+  const rows = [
+    ["収入データ", summary.incomeRecords + "件（ユーザー1: " + summary.incomePrimary + " / ユーザー2: " + summary.incomeSecondary + "）"],
+    ["支出データ", summary.expenseItems + "件"],
+    ["MoneyForward", summary.moneyForwardRows + "件"],
+    ["楽天カード", summary.rakutenRows + "件"],
+    ["外部データ合計", summary.importedRows + "件"],
+    ["紐づけ管理", summary.linkGroups + "件"],
+    ["候補状態", summary.candidateStatus + "件"],
+    ["スナップショット", (summary.householdSnapshots + summary.payrollSnapshots) + "件"],
+  ];
+  return '<div class="storage-status-grid">' + rows.map(([label, value]) => '<div><span>' + esc(label) + '</span><strong>' + esc(value) + '</strong></div>').join('') + '</div>' +
+    '<details class="storage-key-details"><summary>保存キー名を表示</summary><ul>' + summary.keys.map((key) => '<li><code>' + esc(key) + '</code></li>').join('') + '</ul></details>';
+}
 function readObjectStorage(key, fallback = {}) {
   const value = readJsonStorage(key, fallback);
   return value && typeof value === "object" && !Array.isArray(value) ? value : fallback;
@@ -67,9 +171,9 @@ function loadMaster() {
     return merged;
   });
   for (const item of Object.values(saved)) {
-    if (item.source === "manual" && !master.some((entry) => entry.id === item.id)) {
+    if (item?.id && !master.some((entry) => entry.id === item.id)) {
       const normalized = normalizeJudgmentFlags(item);
-      master.unshift({ ...normalized, alignmentId: alignmentId(normalized), amountHistory: normalized.amountHistory || [], externalAliases: externalAliases(normalized), incomeLinks: normalized.incomeLinks || [], paymentMonths: normalized.paymentMonths || [], bimonthlyPattern: normalized.bimonthlyPattern || "even" });
+      master.unshift({ ...normalized, alignmentId: normalized.alignmentId || alignmentId(normalized), amountHistory: normalized.amountHistory || [], externalAliases: externalAliases(normalized), incomeLinks: normalized.incomeLinks || [], paymentMonths: normalized.paymentMonths || [], bimonthlyPattern: normalized.bimonthlyPattern || "even" });
     }
   }
   selectedId ||= master[0]?.id || null;
@@ -177,9 +281,23 @@ function normalizeStoredImportedRows(rows = []) {
     .filter((row) => row.month && (row.content || row.date || row.amount || row.paymentAmount));
 }
 
+function importedStorageRowsFromValue(value) {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === "object") {
+    if (Array.isArray(value.rows)) return value.rows;
+    return Object.values(value).flatMap((entry) => Array.isArray(entry) ? entry : entry && typeof entry === "object" ? [entry] : []);
+  }
+  return [];
+}
+
+function readImportedRowsStorage() {
+  return importedStorageRowsFromValue(readJsonStorage(IMPORT_STORAGE_KEY, []));
+}
 function loadImportedRows() {
-  const saved = readArrayStorage(IMPORT_STORAGE_KEY, []);
-  importedRows = normalizeStoredImportedRows(saved.length ? saved : seededImportedRows());
+  const hasSaved = localStorage.getItem(IMPORT_STORAGE_KEY) !== null;
+  const saved = readImportedRowsStorage();
+  importedRows = normalizeStoredImportedRows(hasSaved ? saved : seededImportedRows());
+  if (hasSaved) localStorage.setItem(IMPORT_STORAGE_KEY, JSON.stringify(importedRows));
 }
 
 function saveImportedRows() {
@@ -232,6 +350,8 @@ function payrollBackupProfile(profile) {
     lastSaved: readJsonStorage(lastSavedKey, null),
     userRecords: readJsonStorage(`payrollUserRecords${suffix}`, []),
     deletedMonths: readJsonStorage(`payrollDeletedMonths${suffix}`, []),
+    snapshots: readJsonStorage(`positivePayrollSnapshots_${profile}`, []),
+    autoBackup: readJsonStorage(`positivePayrollAutoBackup_${profile}`, null),
   };
 }
 
@@ -245,9 +365,10 @@ function createFullBackupPayload() {
       candidateStatus: readJsonStorage(CANDIDATE_STATUS_KEY, {}),
       masterUpdatedAt: localStorage.getItem(MASTER_UPDATED_KEY) || "",
       linkGroups: readJsonStorage(LINK_GROUPS_KEY, []),
+      snapshots: readJsonStorage(HOUSEHOLD_SNAPSHOT_KEY, []),
     },
     imports: {
-      rows: readJsonStorage(IMPORT_STORAGE_KEY, []),
+      rows: normalizeStoredImportedRows(readImportedRowsStorage()),
     },
     payroll: {
       activeProfile: localStorage.getItem("positivePayrollActiveProfile") || "primary",
@@ -298,6 +419,8 @@ function writePayrollProfileBackup(profile, profileData = {}) {
   else localStorage.removeItem(lastSavedKey);
   writeJsonStorage(`payrollUserRecords${suffix}`, Array.isArray(profileData.userRecords) ? profileData.userRecords : []);
   writeJsonStorage(`payrollDeletedMonths${suffix}`, Array.isArray(profileData.deletedMonths) ? profileData.deletedMonths : []);
+  if (Array.isArray(profileData.snapshots)) writeJsonStorage(`positivePayrollSnapshots_${profile}`, profileData.snapshots);
+  if (profileData.autoBackup) writeJsonStorage(`positivePayrollAutoBackup_${profile}`, profileData.autoBackup);
 }
 
 function refreshAfterFullRestore() {
@@ -334,6 +457,7 @@ function restoreFullBackupPayload(payload) {
   writeJsonStorage(STORAGE_KEY, payload.household.master || {});
   writeJsonStorage(CANDIDATE_STATUS_KEY, payload.household.candidateStatus || {});
   writeJsonStorage(LINK_GROUPS_KEY, Array.isArray(payload.household.linkGroups) ? payload.household.linkGroups : []);
+  if (Array.isArray(payload.household.snapshots)) writeJsonStorage(HOUSEHOLD_SNAPSHOT_KEY, payload.household.snapshots);
   if (payload.household.masterUpdatedAt) localStorage.setItem(MASTER_UPDATED_KEY, payload.household.masterUpdatedAt);
   else localStorage.removeItem(MASTER_UPDATED_KEY);
   writeJsonStorage(IMPORT_STORAGE_KEY, Array.isArray(payload.imports.rows) ? payload.imports.rows : []);
@@ -361,6 +485,7 @@ function importFullBackupFile(file) {
   };
   reader.readAsText(file);
 }
+
 
 
 
