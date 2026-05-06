@@ -6557,3 +6557,130 @@ button.danger:hover,
     font-size: 13px;
   }
 }
+
+/* Fine tune after button normalization */
+#logoutApp.nav-tool-button {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: rgba(255, 235, 235, 0.9);
+  box-shadow: none;
+}
+
+#logoutApp.nav-tool-button:hover {
+  border-color: rgba(255, 210, 210, 0.28);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.summary-health-card {
+  padding: 20px;
+  gap: 10px;
+}
+
+.summary-health-card > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 15px;
+}
+
+.summary-health-card .judgment-result {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.summary-health-card .judgment-result.reflected {
+  color: #0a6c4d;
+  background: rgba(31, 122, 99, 0.11);
+}
+
+.summary-health-card .judgment-result.attention {
+  color: #966608;
+  background: rgba(214, 158, 46, 0.14);
+}
+
+.summary-health-card .judgment-result.danger {
+  color: #a92f2f;
+  background: rgba(198, 72, 72, 0.12);
+}
+
+.payroll-ym-row input[type="month"] {
+  color: rgba(23, 53, 46, 0.72);
+  text-align: center;
+  text-align-last: center;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.payroll-ym-row input[type="month"]::before {
+  content: none !important;
+  display: none !important;
+}
+
+.payroll-ym-row input[type="month"]::-webkit-date-and-time-value {
+  text-align: center;
+  color: rgba(23, 53, 46, 0.72);
+  line-height: 1;
+}
+
+#togglePayrollManageEdit {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.payroll-manage-actions .subtle-button,
+.payroll-manage-card-actions .subtle-button {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 750;
+  margin-left: 0;
+}
+
+.payroll-manage-actions .subtle-button.danger,
+.payroll-manage-card-actions .subtle-button.danger {
+  color: #a83232;
+  background: #fff7f7;
+  border-color: rgba(184, 72, 72, 0.28);
+}
+
+@media (max-width: 768px) {
+  .summary-health-card .judgment-result {
+    font-size: 17px;
+    min-height: 32px;
+  }
+
+  .payroll-ym-row input[type="month"] {
+    min-height: 44px;
+    white-space: nowrap;
+    padding-inline: 12px !important;
+  }
+
+  #togglePayrollManageEdit,
+  .payroll-manage-actions .subtle-button,
+  .payroll-manage-card-actions .subtle-button {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .payroll-manage-actions,
+  .payroll-manage-card-actions {
+    gap: 8px;
+  }
+
+  .payroll-manage-actions .subtle-button,
+  .payroll-manage-card-actions .subtle-button {
+    flex: 1 1 120px;
+  }
+}
