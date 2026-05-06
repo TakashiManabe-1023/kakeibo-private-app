@@ -106,7 +106,6 @@ function renderRakutenCards(rows, hasAnyRows = getRowsForExternalSource("rakuten
           <dl>
             <div><dt>支払方法</dt><dd>${esc(row.paymentMethod || "-")}</dd></div>
             <div><dt>詳細</dt><dd>${esc(row.sourceFile || "-")}</dd></div>
-            <div><dt>紐づけ状態</dt><dd>${highlightClass(row) ? "遷移対象" : "-"}</dd></div>
           </dl>
           <div class="external-card-actions">${renderExternalActionButtons(row)}</div>
         </article>`).join("")
