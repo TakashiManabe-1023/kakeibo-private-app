@@ -293,7 +293,7 @@ function renderMaintenanceNotice() {
   if (!notice) return;
   const count = pendingMaintenanceCandidates().length;
   notice.classList.toggle("hidden", !count);
-  notice.innerHTML = count ? '<span>更新確認が必要な項目 ' + count + '件</span><small>各カードの「更新」から確認できます。</small>' : "";
+  notice.innerHTML = count ? '<span>更新確認が必要な項目 ' + count + '件</span>' : "";
 }
 
 function renderDetailMaintenanceCandidates(item) {

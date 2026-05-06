@@ -530,7 +530,7 @@ function payrollRenderShell() {
       <div class="income-topbar">
         <div>
           <h3>収入管理</h3>
-          <p>給与明細の登録、推移確認、分析、データ管理をこのアプリ本体で扱います。</p>
+          <p>給与明細の登録、推移確認、過去データ確認をこのアプリ本体で扱います。</p>
         </div>
         <div class="income-profile">
           <label><select id="payrollProfileSelect" aria-label="ユーザー"><option value="primary"></option><option value="secondary"></option></select></label>
@@ -539,7 +539,7 @@ function payrollRenderShell() {
       <div id="payrollStatus" class="inline-status"></div>
       <div class="tab-strip income-tabs" role="tablist" aria-label="収入管理の表示切替">
         <button class="tab" type="button" data-income-tab="input">月収登録</button>
-        <button class="tab" type="button" data-income-tab="manage">データ管理</button>
+        <button class="tab" type="button" data-income-tab="manage">過去データ</button>
       </div>
       <section id="incomeInputPanel" class="income-tab-panel"></section>
       <section id="incomeChartPanel" class="income-tab-panel"></section>
@@ -640,7 +640,7 @@ function payrollRenderInput() {
           <b>登録年月</b>
           <p>最初に給与データを登録する年月を決めます。</p>
           <div class="payroll-ym-row">
-            <input id="payrollYm" type="month" value="${esc(ym)}" />
+            <input id="payrollYm" type="month" value="${esc(ym)}" aria-label="年月を選択" title="年月を選択" />
             <button id="payrollApplyYm" type="button">決定</button>
           </div>
         </div>

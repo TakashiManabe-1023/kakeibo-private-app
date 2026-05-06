@@ -5752,3 +5752,320 @@ body.auth-locked .auth-screen {
     grid-template-columns: 1fr;
   }
 }
+
+/* UI simplify: menu, analysis, summary, and external data */
+.nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav .mode-switch {
+  margin-bottom: 18px;
+}
+
+.nav-tools {
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid rgba(235, 244, 239, 0.18);
+}
+
+.summary-health-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid rgba(47, 111, 87, 0.18);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(16, 45, 35, 0.07);
+}
+
+.summary-health-card strong {
+  font-size: clamp(22px, 4vw, 34px);
+  color: #12382d;
+}
+
+.summary-health-card .judgment-badge {
+  justify-self: start;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.summary-health-card.healthy .judgment-badge {
+  color: #0f513f;
+  background: rgba(31, 122, 99, 0.12);
+}
+
+.summary-health-card.warning .judgment-badge {
+  color: #87620c;
+  background: rgba(214, 158, 46, 0.14);
+}
+
+.summary-health-card.deficit .judgment-badge {
+  color: #9f2d2d;
+  background: rgba(198, 72, 72, 0.12);
+}
+
+.income-basis-box summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #17352e;
+}
+
+.basis-list {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+}
+
+.basis-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 6px;
+  border-bottom: 1px solid rgba(47, 111, 87, 0.1);
+}
+
+.basis-list dt {
+  color: #65756f;
+  font-size: 12px;
+}
+
+.basis-list dd {
+  margin: 0;
+  text-align: right;
+  color: #17352e;
+  font-weight: 700;
+}
+
+.unified-income-toolbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.unified-income-toolbar label {
+  display: grid;
+  gap: 6px;
+  color: #65756f;
+  font-size: 12px;
+}
+
+.unified-income-toolbar select {
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(47, 111, 87, 0.22);
+  background: #fff;
+  color: #17352e;
+  padding: 0 10px;
+  font-size: 14px;
+}
+
+.unified-chart-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.unified-chart-tabs button {
+  min-height: 36px;
+  border: 1px solid rgba(47, 111, 87, 0.18);
+  border-radius: 999px;
+  background: transparent;
+  color: #315047;
+  padding: 0 12px;
+}
+
+.unified-chart-tabs button.active {
+  color: #0f513f;
+  border-color: rgba(31, 122, 99, 0.5);
+  box-shadow: inset 0 -2px 0 #1f7a63;
+}
+
+.mobile-chart-select {
+  display: none !important;
+}
+
+.review-card-list {
+  display: grid;
+  gap: 10px;
+}
+
+.review-candidate-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid rgba(47, 111, 87, 0.14);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.review-rank {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(31, 122, 99, 0.1);
+  color: #0f513f;
+  font-weight: 800;
+}
+
+.review-candidate-card strong {
+  color: #17352e;
+}
+
+.review-candidate-card .review-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.review-candidate-card .review-amount {
+  color: #17352e;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+#toggleImportEdit,
+#bulkDeleteImportedRows {
+  display: none !important;
+}
+
+.external-card-title,
+.external-mobile-card .external-card-title,
+.imported-table td strong {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+  .nav-tools {
+    margin-top: 22px;
+    padding-top: 16px;
+  }
+
+  .mobile-chart-select {
+    display: grid !important;
+    width: 100%;
+  }
+
+  .unified-chart-tabs {
+    display: none !important;
+  }
+
+  .unified-income-toolbar {
+    align-items: stretch;
+  }
+
+  .unified-income-toolbar label,
+  .unified-income-toolbar select {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .review-candidate-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .review-candidate-card .review-amount {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  #tab-import {
+    font-size: 0 !important;
+  }
+
+  #tab-import::after {
+    content: attr(data-mobile-label);
+    font-size: 14px;
+  }
+
+  #externalImportPanel .subtab-strip,
+  .external-source-tabs,
+  [data-external-tab].subtab {
+    min-width: 0;
+  }
+
+  #externalImportPanel .subtab-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    width: 100%;
+    padding: 4px;
+    border: 1px solid rgba(47, 111, 87, 0.18);
+    border-radius: 12px;
+    background: #fff !important;
+  }
+
+  #externalImportPanel .subtab-strip .subtab {
+    justify-content: center;
+    min-height: 40px;
+    white-space: nowrap;
+  }
+
+  .payroll-ym-row {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden;
+    gap: 10px;
+  }
+
+  .payroll-ym-row input[type="month"],
+  .payroll-ym-row button {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+  }
+}
+
+/* Status aliases used by summary logic */
+.summary-health-card.reflected .judgment-badge {
+  color: #0f513f;
+  background: rgba(31, 122, 99, 0.12);
+}
+
+.summary-health-card.attention .judgment-badge {
+  color: #87620c;
+  background: rgba(214, 158, 46, 0.14);
+}
+
+.summary-health-card.danger .judgment-badge {
+  color: #9f2d2d;
+  background: rgba(198, 72, 72, 0.12);
+}
+
+.review-candidate-card b {
+  justify-self: end;
+  color: #17352e;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.review-candidate-card small,
+.review-candidate-card em {
+  display: block;
+  margin-top: 4px;
+  color: #66766f;
+  font-style: normal;
+}
+
+@media (max-width: 768px) {
+  .review-candidate-card b {
+    grid-column: 2;
+    justify-self: start;
+  }
+}

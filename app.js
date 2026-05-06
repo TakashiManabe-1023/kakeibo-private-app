@@ -1,7 +1,8 @@
 ﻿// app.js
 // 全体の初期化と、収入管理 / 支出管理の表示切替だけを担当します。
 
-const appScrollPositions = { income: 0, expense: 0 };
+const appScrollPositions = { summary: 0, income: 0, expense: 0, analysis: 0 };
+let unifiedAnalysisIncomeProfile = "all";
 
 function bindMediaQueryChange(query, handler) {
   const media = window.matchMedia(query);
@@ -61,29 +62,94 @@ function renderSummaryPanel() {
   const panel = byId("panel-summary");
   if (!panel) return;
   const metrics = overallMetricsForApp();
+  const ym = typeof previousMonthYm === "function" ? previousMonthYm() : "-";
+  const healthClass = metrics.health === "赤字" ? "danger" : metrics.health === "警戒" ? "attention" : "reflected";
   panel.innerHTML = `
     <article class="panel income-native unified-summary-panel">
       <div class="income-topbar"><div><h3>サマリー</h3><p>収入と支出から家計全体の現在地を確認します。</p></div></div>
+      <section class="summary-health-card ${healthClass}">
+        <span>家計判定</span>
+        <strong>${esc(metrics.health)}</strong>
+        <p>${esc(typeof expenseHealthComment === "function" ? expenseHealthComment(metrics.health) : "収入と支出の登録状況を確認してください。")}</p>
+      </section>
       <section class="analysis-summary">
-        ${appMetricCard("世帯収入", yen(metrics.income))}
+        ${appMetricCard("世帯収入", yen(metrics.income), `対象月 ${ym}`)}
         ${appMetricCard("支出合計", yen(metrics.expense))}
         ${appMetricCard("貯蓄・投資", yen(metrics.saving))}
         ${appMetricCard("月次余力", yen(metrics.surplus), metrics.health)}
         ${appMetricCard("固定費率", percent(metrics.fixedRatio))}
         ${appMetricCard("貯蓄率", percent(metrics.savingRatio))}
       </section>
-      <section class="analysis-card analysis-card-wide">
-        <h4>家計判定</h4>
-        <p>${esc(typeof expenseHealthComment === "function" ? expenseHealthComment(metrics.health) : "収入と支出の登録状況を確認してください。")}</p>
-      </section>
+      <details class="analysis-card analysis-card-wide income-basis-box">
+        <summary>世帯収入の根拠</summary>
+        <dl class="basis-list">
+          <div><dt>対象月</dt><dd>${esc(ym)}</dd></div>
+          <div><dt>対象ユーザー</dt><dd>全ユーザー</dd></div>
+          <div><dt>手取り合計</dt><dd>${yen(metrics.income)}</dd></div>
+          <div><dt>通勤交通費</dt><dd>当月収支では除外、支出設計サマリーでは月額収入として参照</dd></div>
+        </dl>
+      </details>
     </article>`;
+}
+
+function payrollRecordsForAnalysisProfile(profile) {
+  if (typeof payrollRecords !== "function" || typeof payrollSetActiveProfile !== "function" || typeof payrollActiveProfile !== "function") return [];
+  const current = payrollActiveProfile();
+  const readOne = (target) => {
+    payrollSetActiveProfile(target);
+    try { return payrollRecords().map((record) => ({ ...record, values: { ...record.values } })); }
+    finally { payrollSetActiveProfile(current); }
+  };
+  if (profile !== "all") return readOne(profile);
+  const merged = new Map();
+  ["primary", "secondary"].forEach((target) => {
+    readOne(target).forEach((record) => {
+      if (!merged.has(record.ym)) merged.set(record.ym, { ym: record.ym, values: {} });
+      const dest = merged.get(record.ym).values;
+      Object.entries(record.values || {}).forEach(([key, value]) => {
+        dest[key] = (Number(dest[key] || 0) + Number(value || 0));
+      });
+    });
+  });
+  return [...merged.values()].sort((a, b) => a.ym.localeCompare(b.ym));
+}
+
+function unifiedIncomeAnalysisHtml() {
+  const records = payrollRecordsForAnalysisProfile(unifiedAnalysisIncomeProfile);
+  const groupLabels = { pay: "支給", deduct: "控除", net: "手取り", overtime: "残業代", custom: "自分で選ぶ" };
+  const groupKeys = {
+    pay: ["base", "position", "workPay", "performance", "annualTotal", "lAllowance", "overtime", "efficiency", "duty", "remote", "commute", "grossTotal"],
+    deduct: ["incomeTax", "residentTax", "healthIns", "careIns", "pension", "employmentIns", "deductionTotal"],
+    net: ["netTotal"],
+    overtime: ["overtime"],
+  };
+  const allOptions = typeof payrollSeriesOptions === "function" ? payrollSeriesOptions() : [];
+  const checked = [...document.querySelectorAll(".unified-series-check:checked")].map((input) => input.value);
+  const keys = payrollState.chartGroup === "custom" ? checked : groupKeys[payrollState.chartGroup] || ["netTotal"];
+  const series = allOptions.filter((option) => keys.includes(option.key));
+  const profileOptions = [
+    ["all", "すべて"],
+    ["primary", typeof payrollProfileLabel === "function" ? payrollProfileLabel("primary") : "ユーザー1"],
+    ["secondary", typeof payrollProfileLabel === "function" ? payrollProfileLabel("secondary") : "ユーザー2"],
+  ];
+  return `
+    <div class="income-analysis-toolbar unified-income-toolbar">
+      <label>対象ユーザー<select id="unifiedIncomeProfile">${profileOptions.map(([value, label]) => `<option value="${value}" ${unifiedAnalysisIncomeProfile === value ? "selected" : ""}>${esc(label)}</option>`).join("")}</select></label>
+      <label class="mobile-chart-select">表示項目<select id="unifiedIncomeChartGroup">${Object.entries(groupLabels).map(([key, label]) => `<option value="${key}" ${payrollState.chartGroup === key ? "selected" : ""}>${esc(label)}</option>`).join("")}</select></label>
+    </div>
+    <div class="income-chart-controls unified-chart-tabs">
+      ${Object.entries(groupLabels).map(([key, label]) => `<button class="subtab ${payrollState.chartGroup === key ? "active" : ""}" type="button" data-unified-chart-group="${key}">${esc(label)}</button>`).join("")}
+    </div>
+    <details class="chartDetails" ${payrollState.chartGroup === "custom" ? "open" : ""}>
+      <summary>表示項目を選ぶ</summary>
+      <div class="income-series-grid">${allOptions.map((option) => `<label><input class="unified-series-check" type="checkbox" value="${esc(option.key)}" ${keys.includes(option.key) ? "checked" : ""}>${esc(option.category)}｜${esc(option.name)}</label>`).join("")}</div>
+    </details>
+    <div class="income-chart-box">${typeof payrollChartSvg === "function" ? payrollChartSvg(records, series) : '<div class="empty-state">表示できるグラフがありません。</div>'}</div>`;
 }
 
 function renderUnifiedAnalysis() {
   const panel = byId("panel-analysis");
   if (!panel) return;
-  const metrics = overallMetricsForApp();
-  const incomeChart = typeof payrollDetailedChartHtml === "function" ? payrollDetailedChartHtml() : '<div class="empty-state">収入データがありません。</div>';
   const review = typeof reviewTopItems === "function" ? reviewTopItems().slice(0, 5) : [];
   const expenseTables =
     typeof analysisTable === "function" && typeof enabledItems === "function" && typeof sumBy === "function" && typeof compactTopRows === "function"
@@ -96,19 +162,8 @@ function renderUnifiedAnalysis() {
     <article class="panel income-native unified-analysis-panel">
       <div class="income-topbar"><div><h3>分析</h3><p>収入・支出・見直し候補を横断して確認します。</p></div></div>
       <section class="analysis-card analysis-card-wide">
-        <h4>全体分析</h4>
-        <div class="analysis-summary">
-          ${appMetricCard("世帯収入", yen(metrics.income))}
-          ${appMetricCard("支出合計", yen(metrics.expense))}
-          ${appMetricCard("当月収支", yen(metrics.surplus), metrics.health)}
-          ${appMetricCard("固定費率", percent(metrics.fixedRatio))}
-          ${appMetricCard("貯蓄率", percent(metrics.savingRatio))}
-          ${appMetricCard("更新確認", `${metrics.pendingCount || 0}件`)}
-        </div>
-      </section>
-      <section class="analysis-card analysis-card-wide">
         <h4>収入分析</h4>
-        ${incomeChart}
+        ${unifiedIncomeAnalysisHtml()}
       </section>
       <section class="analysis-card analysis-card-wide">
         <h4>支出分析</h4>
@@ -116,12 +171,31 @@ function renderUnifiedAnalysis() {
       </section>
       <section class="analysis-card analysis-card-wide">
         <div class="analysis-card-head"><h4>見直し候補</h4><button type="button" data-unified-open-expense>支出管理で確認</button></div>
-        <div class="review-top-list">
-          ${review.length ? review.map((row, index) => `<div class="review-row"><strong>${index + 1}. ${esc(row.item.name || "名称未設定")}</strong><span>${yen(row.item.monthlyAmount)} / ${esc(row.reasons.join("・"))}</span></div>`).join("") : '<div class="empty-state">優先的に見直す候補はありません。</div>'}
+        <div class="review-card-list">
+          ${review.length ? review.map((row, index) => `<article class="review-candidate-card"><span class="review-rank">${index + 1}</span><div><strong>${esc(row.item.name || "名称未設定")}</strong><b>${yen(row.item.monthlyAmount)}</b><small>${esc(row.reasons.join("・"))}</small><em>${esc(displayValue("nature", row.item.nature))} / ${row.item.reducible ? "削減可能" : "削減困難"}</em></div></article>`).join("") : '<div class="empty-state">優先的に見直す候補はありません。</div>'}
         </div>
       </section>
     </article>`;
-  if (typeof payrollBindChartEvents === "function") payrollBindChartEvents();
+  panel.querySelector("#unifiedIncomeProfile")?.addEventListener("change", (event) => {
+    unifiedAnalysisIncomeProfile = event.target.value || "all";
+    renderUnifiedAnalysis();
+  });
+  panel.querySelector("#unifiedIncomeChartGroup")?.addEventListener("change", (event) => {
+    payrollState.chartGroup = event.target.value;
+    renderUnifiedAnalysis();
+  });
+  panel.querySelectorAll("[data-unified-chart-group]").forEach((button) => {
+    button.addEventListener("click", () => {
+      payrollState.chartGroup = button.dataset.unifiedChartGroup;
+      renderUnifiedAnalysis();
+    });
+  });
+  panel.querySelectorAll(".unified-series-check").forEach((input) => {
+    input.addEventListener("change", () => {
+      payrollState.chartGroup = "custom";
+      renderUnifiedAnalysis();
+    });
+  });
   panel.querySelector("[data-unified-open-expense]")?.addEventListener("click", () => switchAppMode("expense"));
 }
 function bindMobileNavSwipe() {
@@ -217,6 +291,7 @@ window.startHouseholdApp = init;
 if (typeof window.householdAuthPassed === "function" && window.householdAuthPassed()) {
   init();
 }
+
 
 
 

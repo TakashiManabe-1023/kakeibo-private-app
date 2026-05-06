@@ -28,10 +28,7 @@ function renderExternalActionButtons(row, hasLink = false) {
   const linkButton = row.sourceType === "moneyforward"
     ? `<button class="link-button" type="button" data-mf-link="${key}" ${hasLink ? "" : "disabled"}>紐づけ</button>`
     : "";
-  const deleteButton = importEditMode
-    ? `<button class="subtle-button danger-button" type="button" data-delete-import="${key}">削除</button>`
-    : "";
-  return `${linkButton}<button class="subtle-button" type="button" data-row-popup="${encodeURIComponent(JSON.stringify(row))}">詳細</button>${deleteButton}`;
+  return `${linkButton}<button class="subtle-button" type="button" data-row-popup="${encodeURIComponent(JSON.stringify(row))}">詳細</button>`;
 }
 
 function renderMoneyForwardCards(rows) {
@@ -88,7 +85,7 @@ function renderMoneyForwardRows(rows) {
             <td><strong>${esc(row.content)}</strong><small>${esc(row.institution)}</small></td>
             <td class="amount">${yen(numberValue(row.amount))}</td>
             <td>${esc(row.major)}<br><small>${esc(row.middle)}</small></td>
-            <td><button class="subtle-button" type="button" data-row-popup="${encodeURIComponent(JSON.stringify(row))}">詳細</button>${importEditMode ? `<button class="subtle-button danger-button" type="button" data-delete-import="${encodeURIComponent(externalKey(row))}">削除</button>` : ""}</td>
+            <td><button class="subtle-button" type="button" data-row-popup="${encodeURIComponent(JSON.stringify(row))}">詳細</button></td>
           </tr>`;
       }).join("")
     : `<tr><td colspan="6">マネーフォワード明細はまだ取り込まれていません。</td></tr>`;
@@ -120,19 +117,19 @@ function findRakutenMatchForMf(row) {
 }
 
 function renderRakutenRows(rows) {
-  const total = rows.reduce((sum, row) => sum + numberValue(row.paymentAmount), 0);
+  const total = rows.reduce((sum, row) => sum + numberValue(row.paymentAmount || row.amount), 0);
   byId("rakutenPaymentTotal").innerHTML = `<small>支払い総計</small><strong>${yen(total)}</strong>`;
   byId("rakutenImportedRows").innerHTML = rows.length
     ? rows.map((row) => `
         <tr class="${highlightClass(row)}" data-external-key="${encodeURIComponent(externalKey(row))}">
           <td>${esc(row.date)}</td>
-          <td><strong>${esc(row.content)}</strong><br><small>${esc(row.sourceFile || "")}</small></td>
+          <td><strong title="${esc(row.content || "")}">${esc(row.content)}</strong><br><small>${esc(row.sourceFile || "")}</small></td>
           <td>${esc(row.user)}</td>
           <td>${esc(row.paymentMethod)}</td>
           <td class="amount">${yen(numberValue(row.amount))}</td>
           <td class="amount">${yen(numberValue(row.fee))}</td>
           <td class="amount">${yen(numberValue(row.total))}</td>
-          <td class="amount">${yen(numberValue(row.paymentAmount))}</td>
+          <td class="amount">${yen(numberValue(row.paymentAmount || row.amount))}</td>
           <td>${renderExternalActionButtons(row)}</td>
         </tr>`).join("")
     : `<tr><td colspan="9">楽天カード明細はまだ取り込まれていません。</td></tr>`;
@@ -184,13 +181,44 @@ function scrollExternalTarget() {
   target?.scrollIntoView({ block: "center" });
 }
 
+const externalDetailLabels = {
+  id: "ID",
+  sourceType: "データ元",
+  sourceFile: "ファイル",
+  month: "対象月",
+  useMonth: "利用月",
+  date: "日付",
+  content: "内容",
+  amount: "金額",
+  fee: "手数料・利息",
+  total: "支払総額",
+  paymentAmount: "支払金額",
+  carryover: "繰越残高",
+  major: "分類",
+  middle: "詳細",
+  institution: "金融機関",
+  paymentMethod: "支払方法",
+  user: "ユーザー",
+  counted: "計算対象",
+  memo: "メモ",
+};
+
+function externalDetailValue(key, value) {
+  if (/amount|total|fee|carryover/i.test(key)) return yen(numberValue(value));
+  if (key === "sourceType") {
+    if (value === "moneyforward") return "マネーフォワード";
+    if (value === "rakuten") return "楽天カード";
+  }
+  return value || "-";
+}
+
 function showRowPopup(encoded) {
   const row = JSON.parse(decodeURIComponent(encoded));
   window.alert(
     Object.entries(row)
       .map(([key, value]) => {
-        const formatted = /amount|total|fee|carryover/i.test(key) ? yen(numberValue(value)) : value;
-        return `${key}: ${formatted}`;
+        const label = externalDetailLabels[key] || key;
+        return `${label}: ${externalDetailValue(key, value)}`;
       })
       .join("\n"),
   );
@@ -267,9 +295,8 @@ function renderImport() {
   byId("importSummary").textContent = importedRows.length ? `${importedRows.length}件 / ${months.length}か月` : "未取り込み";
   const externalNotice = byId("externalCandidateNotice");
   if (externalNotice) {
-    const count = typeof pendingMaintenanceCandidates === "function" ? pendingMaintenanceCandidates().filter((candidate) => ["moneyforward", "rakuten", "link-external"].includes(candidate.source)).length : 0;
-    externalNotice.classList.toggle("hidden", !count);
-    externalNotice.innerHTML = count ? `<span>外部データ由来の更新確認 ${count}件</span><button type="button" data-open-maintenance>入力で確認</button>` : "";
+    externalNotice.classList.add("hidden");
+    externalNotice.innerHTML = "";
   }
   byId("importMonthSelect").innerHTML = months.length
     ? months.map((month) => `<option value="${esc(month)}" ${month === selected ? "selected" : ""}>${esc(month)}</option>`).join("")
@@ -281,8 +308,8 @@ function renderImport() {
   renderMoneyForwardRows(rows.filter((row) => row.sourceType === "moneyforward"));
   renderRakutenRows(rows.filter((row) => row.sourceType === "rakuten"));
   renderExternalBackButton();
-  byId("toggleImportEdit").textContent = importEditMode ? "編集終了" : "編集";
-  byId("bulkDeleteImportedRows").classList.toggle("hidden", !importEditMode);
+  byId("toggleImportEdit")?.classList.add("hidden");
+  byId("bulkDeleteImportedRows")?.classList.add("hidden");
   requestAnimationFrame(scrollExternalTarget);
 }
 
