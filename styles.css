@@ -6240,3 +6240,320 @@ body.auth-locked .auth-screen {
     grid-template-columns: 1fr;
   }
 }
+
+/* Button system and iPhone month input final balance */
+:root {
+  --button-radius: 11px;
+  --button-height: 40px;
+  --button-height-mobile: 44px;
+  --button-pad-x: 14px;
+  --button-font-size: 14px;
+}
+
+button,
+.file-button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: var(--button-height);
+  padding: 0 var(--button-pad-x);
+  border-radius: var(--button-radius);
+  font-size: var(--button-font-size);
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease, box-shadow 140ms ease, transform 120ms ease;
+}
+
+button:active,
+.file-button:active {
+  transform: translateY(1px);
+}
+
+button:disabled,
+.file-button.disabled {
+  transform: none;
+  opacity: 0.48;
+}
+
+.primary-button,
+#payrollApplyYm,
+#payrollSave,
+#commitEdit,
+#confirmCandidateApply,
+#applyPendingCandidate,
+#addLinkGroup,
+#saveListOptions,
+#payrollSaveProfileName,
+#exportFullBackup,
+.external-toolbar .file-button {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 5px 14px rgba(31, 122, 99, 0.14);
+}
+
+.primary-button:hover,
+#payrollApplyYm:hover,
+#payrollSave:hover,
+#commitEdit:hover,
+#confirmCandidateApply:hover,
+#applyPendingCandidate:hover,
+#addLinkGroup:hover,
+#saveListOptions:hover,
+#payrollSaveProfileName:hover,
+#exportFullBackup:hover,
+.external-toolbar .file-button:hover {
+  border-color: #145f4e;
+  background: #176b57;
+}
+
+.subtle-button,
+.link-button,
+#payrollConfirm,
+#payrollClear,
+#payrollCopyPrevious,
+#payrollChooseManual,
+#togglePayrollManageEdit,
+#payrollExportExcel,
+#exportExpenseCsv,
+#addMasterItem,
+#toggleRowEdit,
+#cancelEdit,
+#rejectPendingCandidate,
+#clearLinkDraft,
+#addLinkIncome,
+#addLinkExpense,
+#addLinkExternal,
+#closeSettings,
+#closeHelp,
+#togglePayrollAnalysis,
+.payroll-file-action,
+.payroll-primary-action {
+  border-color: rgba(47, 111, 87, 0.22);
+  background: #fff;
+  color: #17352e;
+  box-shadow: 0 1px 0 rgba(16, 45, 35, 0.03);
+}
+
+.subtle-button:hover,
+.link-button:hover,
+#payrollConfirm:hover,
+#payrollClear:hover,
+#payrollCopyPrevious:hover,
+#payrollChooseManual:hover,
+#togglePayrollManageEdit:hover,
+#payrollExportExcel:hover,
+#exportExpenseCsv:hover,
+#addMasterItem:hover,
+#toggleRowEdit:hover,
+#cancelEdit:hover,
+#rejectPendingCandidate:hover,
+#clearLinkDraft:hover,
+#addLinkIncome:hover,
+#addLinkExpense:hover,
+#addLinkExternal:hover,
+#closeSettings:hover,
+#closeHelp:hover,
+#togglePayrollAnalysis:hover,
+.payroll-file-action:hover,
+.payroll-primary-action:hover {
+  border-color: rgba(31, 122, 99, 0.48);
+  background: rgba(31, 122, 99, 0.06);
+}
+
+button.danger,
+.danger-button,
+.subtle-button.danger,
+.danger-file-button,
+#deleteItem,
+#cancelCandidateApply,
+#bulkDeleteImportedRows,
+#resetMaster,
+#logoutApp {
+  border-color: rgba(184, 72, 72, 0.22);
+  background: #fff8f8;
+  color: #a83232;
+  box-shadow: none;
+}
+
+button.danger:hover,
+.danger-button:hover,
+.subtle-button.danger:hover,
+.danger-file-button:hover,
+#deleteItem:hover,
+#cancelCandidateApply:hover,
+#bulkDeleteImportedRows:hover,
+#resetMaster:hover,
+#logoutApp:hover {
+  border-color: rgba(184, 72, 72, 0.42);
+  background: #fff1f1;
+}
+
+.icon-button,
+.view-icon-toggle button,
+.detail-close-button,
+#closeCandidateApply,
+.alias-chip button,
+.link-chip button {
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 10px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.icon-button {
+  width: 38px;
+  min-width: 38px;
+  min-height: 38px;
+}
+
+.sort-button,
+.tab,
+.subtab,
+.mode-button,
+.nav-tool-button,
+.help-toc-link {
+  transform: none !important;
+}
+
+.payroll-ym-row {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.payroll-ym-row input[type="month"] {
+  appearance: none;
+  -webkit-appearance: none;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  min-width: 0 !important;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: var(--button-radius);
+}
+
+.payroll-ym-row input[type="month"]::-webkit-date-and-time-value {
+  min-width: 0;
+  text-align: left;
+}
+
+@media (max-width: 768px) {
+  button,
+  .file-button {
+    min-height: var(--button-height-mobile);
+    min-width: 0;
+    max-width: 100%;
+    padding-inline: 13px;
+    font-size: 16px;
+  }
+
+  .icon-button,
+  .view-icon-toggle button,
+  .detail-close-button,
+  #closeCandidateApply,
+  .alias-chip button,
+  .link-chip button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .flow-step {
+    overflow: hidden;
+  }
+
+  .flow-step > div {
+    width: 100%;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden;
+  }
+
+  .payroll-ym-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    box-sizing: border-box;
+  }
+
+  .payroll-ym-row input[type="month"],
+  .payroll-ym-row button {
+    display: flex;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    inline-size: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    border-radius: 12px !important;
+  }
+
+  .payroll-ym-row input[type="month"] {
+    padding: 0 12px !important;
+  }
+
+  .button-row,
+  .payroll-method-actions,
+  .payroll-sub-actions,
+  .payroll-manage-card-actions,
+  .payroll-manage-actions,
+  .modal-actions,
+  .link-add-row,
+  .master-bottom-actions,
+  .external-card-actions,
+  .candidate-actions {
+    gap: 10px;
+  }
+
+  .button-row > *,
+  .payroll-method-actions > *,
+  .payroll-sub-actions > *,
+  .modal-actions > *,
+  .link-add-row > *,
+  .external-card-actions > *,
+  .candidate-actions > * {
+    min-width: 0;
+  }
+
+  .auth-card button,
+  #payrollApplyYm,
+  #payrollSave,
+  #commitEdit,
+  .external-toolbar .file-button {
+    min-height: 46px;
+  }
+}
+
+@media (min-width: 769px) {
+  button,
+  .file-button {
+    min-height: 38px;
+  }
+
+  .primary-button,
+  #payrollApplyYm,
+  #payrollSave,
+  #commitEdit,
+  .external-toolbar .file-button {
+    min-height: 40px;
+  }
+
+  .subtle-button,
+  .link-button {
+    min-height: 34px;
+    font-size: 13px;
+  }
+}
