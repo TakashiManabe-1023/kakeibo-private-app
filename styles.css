@@ -8336,3 +8336,28 @@ button.danger,
     font-size: 16px !important;
   }
 }
+
+/* Mobile menu toggle: keep dark green in both closed and open states. */
+@media (max-width: 768px) {
+  .mobile-nav-toggle,
+  .mobile-nav-toggle:hover,
+  .mobile-nav-toggle:active,
+  .mobile-nav-toggle:focus-visible,
+  body.mobile-nav-open .mobile-nav-toggle,
+  body.mobile-nav-open .mobile-nav-toggle:hover,
+  body.mobile-nav-open .mobile-nav-toggle:active,
+  body.mobile-nav-open .mobile-nav-toggle:focus-visible,
+  .mobile-nav-toggle[aria-expanded="true"] {
+    background: #17352e !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 24px rgba(9, 28, 22, 0.22) !important;
+    color: #f8faf8 !important;
+  }
+
+  .mobile-nav-toggle span,
+  body.mobile-nav-open .mobile-nav-toggle span,
+  .mobile-nav-toggle[aria-expanded="true"] span {
+    background: #f8faf8 !important;
+  }
+}
