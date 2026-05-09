@@ -6920,18 +6920,18 @@ button.danger:hover,
 .link-button.active,
 tr.highlight .link-button,
 .external-mobile-card.highlight .link-button {
-  border-color: rgba(31, 122, 99, 0.65);
-  background: #1f7a63;
-  color: #fff;
-  box-shadow: 0 5px 12px rgba(31, 122, 99, 0.14);
+  border-color: rgba(31, 122, 99, 0.45);
+  background: #e8f4ee;
+  color: #145f4e;
+  box-shadow: 0 3px 10px rgba(31, 122, 99, 0.08);
 }
 
 .link-button:not(:disabled):hover,
 .link-button.active:hover,
 tr.highlight .link-button:hover,
 .external-mobile-card.highlight .link-button:hover {
-  background: #176b57;
-  border-color: #145f4e;
+  background: #dceee5;
+  border-color: rgba(31, 122, 99, 0.62);
 }
 
 .expense-card-row {

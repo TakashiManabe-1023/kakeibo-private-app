@@ -21,6 +21,7 @@ function bindAppModeEvents() {
   byId("mobileNavToggle")?.addEventListener("click", toggleMobileNav);
   byId("mobileNavBackdrop")?.addEventListener("click", closeMobileNav);
   bindMobileNavSwipe();
+  bindPullToRefresh();
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeMobileNav();
   });
@@ -137,6 +138,34 @@ function unifiedIncomeAnalysisHtml() {
     <div class="income-chart-box">${typeof payrollChartSvg === "function" ? payrollChartSvg(records, series) : '<div class="empty-state">表示できるグラフがありません。</div>'}</div>`;
 }
 
+function appHasUnsavedEdits() {
+  if (typeof editingId !== "undefined" && editingId) return true;
+  if (typeof payrollState !== "undefined" && payrollState?.dirty) return true;
+  return false;
+}
+
+function refreshAllViews({ silent = false } = {}) {
+  if (appHasUnsavedEdits()) {
+    if (!silent && typeof showToast === "function") showToast("編集中の内容があるため、更新を見送りました。", "warn");
+    return false;
+  }
+  if (typeof loadMaster === "function") loadMaster();
+  if (typeof loadOptions === "function") loadOptions();
+  if (typeof loadCandidateStatus === "function") loadCandidateStatus();
+  if (typeof loadImportedRows === "function") loadImportedRows();
+  if (typeof loadLinkGroups === "function") loadLinkGroups();
+  if (typeof invalidateMaintenanceCandidateCache === "function") invalidateMaintenanceCandidateCache();
+  renderHeader();
+  if (appMode === "summary") renderSummaryPanel();
+  if (appMode === "income" && typeof mountIncomeManagement === "function") mountIncomeManagement();
+  if (appMode === "expense" && typeof renderExpenseVisible === "function") renderExpenseVisible();
+  if (appMode === "analysis") renderUnifiedAnalysis();
+  if (typeof renderSettings === "function" && !byId("settingsModal")?.classList.contains("hidden")) renderSettings();
+  if (typeof renderHelp === "function" && !byId("helpModal")?.classList.contains("hidden")) renderHelp();
+  if (!silent && typeof showToast === "function") showToast("最新状態に更新しました。", "ok");
+  return true;
+}
+
 function renderUnifiedAnalysis() {
   const panel = byId("panel-analysis");
   if (!panel) return;
@@ -160,7 +189,7 @@ function renderUnifiedAnalysis() {
         ${expenseTables || '<div class="empty-state">支出データがありません。</div>'}
       </section>
       <section class="analysis-card analysis-card-wide">
-        <div class="analysis-card-head"><h4>見直し候補</h4><button type="button" data-unified-open-expense>支出管理で確認</button></div>
+        <div class="analysis-card-head"><h4>見直し候補</h4></div>
         <div class="review-card-list">
           ${review.length ? review.map((row, index) => `<article class="review-candidate-card"><span class="review-rank">${index + 1}</span><div><strong>${esc(row.item.name || "名称未設定")}</strong><b>${yen(row.item.monthlyAmount)}</b><small>${esc(row.reasons.join("・"))}</small><em>${esc(displayValue("nature", row.item.nature))} / ${row.item.reducible ? "削減可能" : "削減困難"}</em></div></article>`).join("") : '<div class="empty-state">優先的に見直す候補はありません。</div>'}
         </div>
@@ -186,8 +215,40 @@ function renderUnifiedAnalysis() {
       renderUnifiedAnalysis();
     });
   });
-  panel.querySelector("[data-unified-open-expense]")?.addEventListener("click", () => switchAppMode("expense"));
 }
+function bindPullToRefresh() {
+  let startY = 0;
+  let startX = 0;
+  let pulling = false;
+  let refreshing = false;
+  const isMobile = () => window.matchMedia("(max-width: 768px)").matches;
+  const isInteractive = (target) => Boolean(target.closest("input, textarea, select, button, a, [contenteditable='true']"));
+  window.addEventListener("touchstart", (event) => {
+    if (!isMobile() || event.touches.length !== 1 || isInteractive(event.target)) return;
+    if ((window.scrollY || document.documentElement.scrollTop || 0) > 2) return;
+    const touch = event.touches[0];
+    startY = touch.clientY;
+    startX = touch.clientX;
+    pulling = true;
+  }, { passive: true });
+  window.addEventListener("touchend", (event) => {
+    if (!pulling || refreshing) {
+      pulling = false;
+      return;
+    }
+    pulling = false;
+    const touch = event.changedTouches[0];
+    const dy = touch.clientY - startY;
+    const dx = Math.abs(touch.clientX - startX);
+    if (dy < 90 || dx > 45) return;
+    refreshing = true;
+    requestAnimationFrame(() => {
+      refreshAllViews();
+      setTimeout(() => { refreshing = false; }, 700);
+    });
+  }, { passive: true });
+}
+
 function bindMobileNavSwipe() {
   let startX = 0;
   let startY = 0;

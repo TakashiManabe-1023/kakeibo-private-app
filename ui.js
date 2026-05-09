@@ -136,42 +136,27 @@ function isDeductedPayment(item) {
 }
 
 function householdBalanceMetrics() {
-  const ym = previousMonthYm();
-  const profiles = ["primary", "secondary"];
-  const incomeByPerson = profiles.map((profile) => {
-    const record = payrollRecordsForProfile(profile).find((row) => row.ym === ym);
-    const label = typeof payrollProfileLabel === "function" ? payrollProfileLabel(profile) : profile;
-    const net = record && typeof payrollValue === "function" ? payrollValue(record, "netTotal") : 0;
-    const commute = record && typeof payrollValue === "function" ? payrollValue(record, "commute") : 0;
-    return { profile, label, income: Math.max(0, net - commute) };
-  });
-  const expenseItems = (master || []).filter((item) => {
-    if (item.enabled === false) return false;
-    if (item.flow !== "expense") return false;
-    // 天引きは給与の手取り額にすでに反映済みなので、ここで再度控除すると二重計上になります。
-    if (isDeductedPayment(item)) return false;
-    return true;
-  });
-  const expense = expenseItems.reduce((sum, item) => sum + monthlyEquivalentCost(item), 0);
-  const income = incomeByPerson.reduce((sum, row) => sum + row.income, 0);
-  const balance = income - expense;
-  const status = balance < 0 ? "赤字" : balance < income * 0.08 ? "警戒" : "健全";
-  const expensesByPerson = new Map();
-  expenseItems.forEach((item) => expensesByPerson.set(item.person || "", (expensesByPerson.get(item.person || "") || 0) + monthlyEquivalentCost(item)));
-  const users = incomeByPerson
-    .filter((row) => row.income > 0)
-    .map((row) => ({ label: row.label, balance: row.income - (expensesByPerson.get(row.label) || 0) }));
-  return { ym, income, expense, balance, status, users };
+  const metrics = typeof expenseSummaryMetrics === "function"
+    ? expenseSummaryMetrics()
+    : { ym: previousMonthYm(), income: 0, surplus: 0, health: "-" };
+  return {
+    ym: metrics.ym || previousMonthYm(),
+    income: Number(metrics.income || 0),
+    balance: Number(metrics.surplus || 0),
+    status: metrics.health || "-",
+    users: [],
+  };
 }
 
 function renderHouseholdBalanceCard() {
   const card = byId("householdBalanceCard");
   if (!card) return;
   const metrics = householdBalanceMetrics();
-  const [year, month] = metrics.ym.split("-");
+  const [year, month] = String(metrics.ym || "-").split("-");
+  const monthLabel = year && month ? `(${year}年${Number(month)}月)` : "";
   card.className = `nav-balance-card ${metrics.status === "赤字" ? "danger" : metrics.status === "警戒" ? "warn" : "good"}`;
   card.innerHTML = `
-    <div class="nav-balance-head"><span>当月収支 <small>(${year}年${Number(month)}月)</small></span></div>
+    <div class="nav-balance-head"><span>月次余力 <small>${monthLabel}</small></span></div>
     <div class="nav-balance-main"><strong>${metrics.balance >= 0 ? "+" : ""}${yen(metrics.balance)}</strong><b>${esc(metrics.status)}</b></div>
     ${metrics.users.length ? `<ul>${metrics.users.map((row) => `<li><span>${esc(row.label)}</span><em>${row.balance >= 0 ? "+" : ""}${yen(row.balance)}</em></li>`).join("")}</ul>` : ""}
   `;
@@ -207,10 +192,10 @@ function renderHelp() {
         <p class="help-lead">このアプリは、家計を細かく記録するための家計簿ではありません。収入に対して支出設計が適切か、どこを見直すべきかを判断するための道具です。</p>
         <div class="help-grid">
           <div><h5>目的</h5><p>収入・支出・外部データを統合し、世帯として無理のない支出水準かを確認します。</p></div>
-          <div><h5>できること</h5><ul><li>当月収支と健全性を確認できます。</li><li>支出項目の最新化候補を確認できます。</li><li>収入天引き、支出項目、外部明細を紐づけて判断できます。</li></ul></div>
+          <div><h5>できること</h5><ul><li>月次余力と健全性を確認できます。</li><li>支出項目の最新化候補を確認できます。</li><li>収入天引き、支出項目、外部明細を紐づけて判断できます。</li></ul></div>
         </div>
         <h5>操作手順</h5>
-        <ol><li>左メニューの当月収支で全体感を確認します。</li><li>収入管理の月収登録で給与データを登録します。</li><li>支出管理で支出設計を整えます。</li><li>外部データを取り込み、入力画面の更新候補表示を確認します。</li></ol>
+        <ol><li>左メニューの月次余力で全体感を確認します。</li><li>収入管理の月収登録で給与データを登録します。</li><li>支出管理で支出設計を整えます。</li><li>外部データを取り込み、入力画面の更新候補表示を確認します。</li></ol>
         <div class="help-note"><strong>注意点</strong><span>外部データは補完・確認用です。取り込んだだけで支出項目を自動上書きすることはありません。</span></div>
         <p class="help-miss"><strong>よくあるミス：</strong>家計簿のように毎月すべての明細を分類しようとすること。目的は「支出設計の判断」です。</p>
       </section>
@@ -291,10 +276,10 @@ function renderHelp() {
       <section id="help-balance" class="help-section">
         <h4>10. 家計サマリー（左メニュー）</h4>
         <h5>目的</h5><p>収入管理と支出管理を横断し、対象月の実質的な家計収支をすぐ確認します。</p>
-        <h5>できること</h5><ul><li>当月収支、黒字・赤字・警戒の状態、対象月を確認できます。</li><li>可能な場合はユーザー別の収支も確認できます。</li></ul>
-        <h5>計算の考え方</h5><ul><li>対象月は現在月の1か月前です。</li><li>収入は全ユーザーの手取りから通勤交通費を除いた金額です。</li><li>支出は有効な支出項目のうち、天引きではない支出を月額換算して合計します。</li><li>天引き項目は手取りに反映済みのため、二重計上を避けて除外します。</li></ul>
-        <h5>操作手順</h5><ol><li>左メニューの当月収支を確認します。</li><li>警戒または赤字の場合は左メニューの分析を開きます。</li><li>更新候補や支出入力で見直す項目を確認します。</li></ol>
-        <p class="help-miss"><strong>よくあるミス：</strong>貯蓄・投資や天引き項目を当月収支に重ねて入れてしまうこと。</p>
+        <h5>できること</h5><ul><li>月次余力、黒字・赤字・警戒の状態、対象月を確認できます。</li><li>可能な場合はユーザー別の収支も確認できます。</li></ul>
+        <h5>計算の考え方</h5><ul><li>対象月は収入管理に登録されている最新月です。</li><li>収入は全ユーザーの合計手取額に、年金掛金・通勤交通費戻入・持株拠出金・持ち家財形貯蓄・総合預金を戻した金額です。</li><li>支出は有効な支出項目のうち、フローが支出の項目を月額換算して合計します。</li><li>貯蓄・投資は支出とは分けて月額換算し、月次余力から差し引きます。</li></ul>
+        <h5>操作手順</h5><ol><li>左メニューの月次余力を確認します。</li><li>警戒または赤字の場合は左メニューの分析を開きます。</li><li>更新候補や支出入力で見直す項目を確認します。</li></ol>
+        <p class="help-miss"><strong>よくあるミス：</strong>貯蓄・投資や天引き項目を月次余力に重ねて入れてしまうこと。</p>
       </section>
 
       <section id="help-data" class="help-section">
@@ -328,7 +313,7 @@ function renderHelp() {
         </div>
         <div class="help-example">
           <h5>家計が苦しい原因を見る</h5>
-          <ol><li>左メニューの当月収支を確認します。</li><li>左メニューの分析を開きます。</li><li>削減可能額と見直し候補Top5を確認します。</li><li>登録データタブで対象項目を編集します。</li></ol>
+          <ol><li>左メニューの月次余力を確認します。</li><li>左メニューの分析を開きます。</li><li>削減可能額と見直し候補Top5を確認します。</li><li>登録データタブで対象項目を編集します。</li></ol>
         </div>
         <p class="help-miss"><strong>よくあるミス：</strong>先に細かい明細を触りすぎること。まずサマリー、次に候補、最後に詳細の順で見ると早いです。</p>
       </section>

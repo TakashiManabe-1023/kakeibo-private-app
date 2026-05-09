@@ -68,8 +68,9 @@ function renderRakutenDetailButton(row) {
 
 function renderExternalActionButtons(row, hasLink = false) {
   const key = encodeURIComponent(externalKey(row));
-  const linkButton = row.sourceType === "moneyforward"
-    ? `<button class="link-button" type="button" data-mf-link="${key}" ${hasLink ? "" : "disabled"}>紐づけ</button>`
+  const sourceType = normalizeExternalSourceType(row);
+  const linkButton = sourceType === "moneyforward"
+    ? `<button class="link-button ${hasLink ? "active" : ""}" type="button" data-mf-link="${key}" ${hasLink ? "" : "disabled"}>リンク先</button>`
     : "";
   return `${linkButton}<button class="subtle-button" type="button" data-row-popup="${encodeURIComponent(JSON.stringify(row))}">詳細</button>`;
 }
@@ -87,7 +88,7 @@ function renderMoneyForwardCards(rows) {
             <dl>
               <div><dt>分類</dt><dd>${esc(row.major || "-")}${row.middle ? ` / ${esc(row.middle)}` : ""}</dd></div>
               <div><dt>詳細</dt><dd>${esc(row.institution || "-")}</dd></div>
-              <div><dt>紐づけ状態</dt><dd>${hasLink ? "候補あり" : "候補なし"}</dd></div>
+              <div><dt>リンク先</dt><dd>${hasLink ? "候補あり" : "候補なし"}</dd></div>
             </dl>
             <div class="external-card-actions">${renderExternalActionButtons(row, hasLink)}</div>
           </article>`;
@@ -122,7 +123,7 @@ function renderMoneyForwardRows(rows) {
         const hasLink = !!findRakutenMatchForMf(row)?.rows?.length;
         return `
           <tr class="${highlightClass(row)}" data-external-key="${encodeURIComponent(externalKey(row))}">
-            <td><button class="link-button" type="button" data-mf-link="${encodeURIComponent(externalKey(row))}" ${hasLink ? "" : "disabled"}>紐づけ</button></td>
+            <td><button class="link-button ${hasLink ? "active" : ""}" type="button" data-mf-link="${encodeURIComponent(externalKey(row))}" ${hasLink ? "" : "disabled"}>リンク先</button></td>
             <td>${esc(row.date)}</td>
             <td><strong>${esc(row.content)}</strong><small>${esc(row.institution)}</small></td>
             <td class="amount">${yen(numberValue(row.amount))}</td>
