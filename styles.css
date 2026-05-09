@@ -7772,3 +7772,317 @@ button.danger,
     min-width: 720px;
   }
 }
+
+/* Final balance pass: restore natural menu, expense cards, detail modal, and analysis rhythm. */
+.nav .mode-button,
+.nav .nav-tool-button {
+  justify-content: flex-start;
+  color: #d7e3df;
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+}
+
+.nav .mode-button > span,
+.nav .nav-tool-button > span {
+  color: #b7c9c3;
+}
+
+.nav .mode-button.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.nav .mode-button.active > span,
+.nav .nav-tool-button:hover > span,
+.nav .nav-tool-button:focus-visible > span {
+  color: #ffffff;
+}
+
+#logoutApp.nav-tool-button,
+#logoutApp.nav-tool-button:hover,
+#logoutApp.nav-tool-button:active,
+#logoutApp.nav-tool-button:focus-visible {
+  justify-content: flex-start !important;
+  color: #d7e3df !important;
+  background: rgba(255, 255, 255, 0.055) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+}
+
+#logoutApp.nav-tool-button > span {
+  color: #b7c9c3 !important;
+}
+
+#logoutApp.nav-tool-button:hover,
+#logoutApp.nav-tool-button:focus-visible {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.expense-category-card {
+  border: 1px solid rgba(47, 111, 87, 0.14);
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(16, 45, 35, 0.045);
+}
+
+.expense-card-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(116px, auto) !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 12px 14px !important;
+  border-radius: 10px;
+  background: transparent;
+  color: #17352e;
+  text-align: left;
+  white-space: normal !important;
+}
+
+.expense-card-row:hover,
+.expense-card-row.selected {
+  background: rgba(31, 122, 99, 0.075) !important;
+}
+
+.expense-card-row > span:first-child {
+  min-width: 0 !important;
+  overflow: hidden;
+}
+
+.expense-card-row > span:first-child strong {
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
+
+.expense-card-row > span:first-child small {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.45;
+}
+
+.expense-card-meta {
+  justify-self: end !important;
+  justify-items: end !important;
+  min-width: 116px !important;
+  max-width: none !important;
+  text-align: right !important;
+}
+
+.expense-card-meta .amount-stack,
+.expense-card-meta .cost-main,
+.expense-card-meta .cost-sub {
+  text-align: right !important;
+  justify-items: end !important;
+}
+
+.expense-card-meta .mini-badge,
+.expense-card-row .maintenance-chip {
+  justify-self: end !important;
+}
+
+#detailPanel .detail-title-actions,
+#detailPanel .detail-actions,
+#detailPanel .panel-head {
+  gap: 10px;
+}
+
+#detailPanel .detail-title-actions {
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+#detailPanel .detail-actions {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+#detailPanel button {
+  min-height: 42px;
+  border-radius: 10px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+#detailPanel #toggleRowEdit,
+#detailPanel #commitEdit {
+  border-color: var(--button-primary, #1f7a63);
+  background: var(--button-primary, #1f7a63);
+  color: #ffffff;
+}
+
+#detailPanel #cancelEdit,
+#detailPanel #toggleHistory,
+#detailPanel .detail-close-button {
+  border-color: rgba(47, 111, 87, 0.24);
+  background: #ffffff;
+  color: #17352e;
+}
+
+#detailPanel #deleteItem {
+  border-color: rgba(180, 35, 24, 0.25);
+  background: #fff5f3;
+  color: #b42318;
+}
+
+#detailPanel .detail-close-button {
+  min-height: 38px;
+  padding: 0 12px;
+  box-shadow: none;
+}
+
+.external-toolbar .file-button,
+.external-source-select,
+.external-source-select select,
+.month-select-wrap select,
+#prevImportMonth,
+#nextImportMonth {
+  box-sizing: border-box;
+  min-height: 44px !important;
+  height: 44px !important;
+  max-height: 44px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  align-items: center;
+}
+
+.external-source-select select,
+.month-select-wrap select {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.unified-analysis-panel .analysis-card,
+.unified-analysis-panel .analysis-card-wide {
+  padding: 16px;
+  border-radius: 14px;
+}
+
+.unified-analysis-panel h4,
+.unified-analysis-panel .analysis-card-head h4 {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.unified-analysis-panel .analysis-card-head button,
+.unified-analysis-panel .income-chart-controls .subtab,
+.unified-analysis-panel select,
+.income-analysis-toolbar select {
+  min-height: 42px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+
+.unified-analysis-panel .income-chart-controls .subtab {
+  padding: 0 14px;
+  border: 1px solid rgba(47, 111, 87, 0.18);
+  border-bottom: 2px solid transparent;
+}
+
+.unified-analysis-panel .income-chart-controls .subtab.active {
+  border-color: rgba(47, 111, 87, 0.2);
+  border-bottom-color: var(--button-primary, #1f7a63);
+  background: #ffffff;
+  color: #17352e;
+  box-shadow: none;
+}
+
+@media (max-width: 768px) {
+  #detailPanel.mobile-detail-modal {
+    top: max(72px, 10vh) !important;
+    bottom: auto !important;
+    left: 12px !important;
+    right: 12px !important;
+    max-height: min(76vh, calc(100dvh - max(72px, 10vh) - 18px - env(safe-area-inset-bottom))) !important;
+    overflow-y: auto !important;
+    border-radius: 16px !important;
+    box-shadow: 0 18px 48px rgba(9, 28, 22, 0.24) !important;
+    animation: expenseDetailDropIn 180ms ease-out !important;
+  }
+
+  #detailPanel.mobile-detail-modal .detail-title-actions button,
+  #detailPanel.mobile-detail-modal button {
+    width: auto !important;
+    min-height: 46px;
+    font-size: 16px;
+  }
+
+  #detailPanel.mobile-detail-modal .detail-close-button {
+    min-height: 38px !important;
+    font-size: 14px;
+    padding: 0 12px !important;
+  }
+
+  #detailPanel.mobile-detail-modal .detail-actions button {
+    flex: 1 1 130px;
+  }
+
+  .expense-card-row {
+    grid-template-columns: minmax(0, 1fr) minmax(108px, auto) !important;
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+
+  .expense-card-meta {
+    min-width: 108px !important;
+  }
+
+  .external-toolbar .file-button,
+  .external-source-select,
+  .external-source-select select,
+  .month-select-wrap select,
+  #prevImportMonth,
+  #nextImportMonth {
+    min-height: 46px !important;
+    height: 46px !important;
+    max-height: 46px !important;
+    font-size: 16px !important;
+  }
+
+  .unified-analysis-panel .analysis-card-head button,
+  .unified-analysis-panel .income-chart-controls .subtab,
+  .unified-analysis-panel select,
+  .income-analysis-toolbar select {
+    min-height: 46px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 390px) {
+  .expense-card-row {
+    grid-template-columns: minmax(0, 1fr) minmax(100px, auto) !important;
+  }
+
+  .expense-card-meta {
+    min-width: 100px !important;
+  }
+}
+
+@keyframes expenseDetailDropIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #detailPanel.mobile-detail-modal {
+    animation: none !important;
+  }
+}

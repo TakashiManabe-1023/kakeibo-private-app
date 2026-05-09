@@ -152,11 +152,11 @@ function renderUnifiedAnalysis() {
     <article class="panel income-native unified-analysis-panel">
       <div class="income-topbar"><div><h3>分析</h3><p>収入・支出・見直し候補を横断して確認します。</p></div></div>
       <section class="analysis-card analysis-card-wide">
-        <h4>収入分析</h4>
+        <h4>収入</h4>
         ${unifiedIncomeAnalysisHtml()}
       </section>
       <section class="analysis-card analysis-card-wide">
-        <h4>支出分析</h4>
+        <h4>支出</h4>
         ${expenseTables || '<div class="empty-state">支出データがありません。</div>'}
       </section>
       <section class="analysis-card analysis-card-wide">
@@ -282,6 +282,7 @@ window.startHouseholdApp = init;
 if (typeof window.householdAuthPassed === "function" && window.householdAuthPassed()) {
   init();
 }
+
 
 
 
