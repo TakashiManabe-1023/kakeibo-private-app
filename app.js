@@ -51,7 +51,7 @@ function closeMobileNav() {
 
 function overallMetricsForApp() {
   if (typeof expenseSummaryMetrics === "function") return expenseSummaryMetrics();
-  return { income: 0, expense: 0, saving: 0, surplus: 0, fixedRatio: 0, savingRatio: 0, health: "-", pendingCount: 0, attentionCount: 0 };
+  return { ym: "", income: 0, expense: 0, saving: 0, surplus: 0, housingRatio: 0, savingRatio: 0, health: "-", pendingCount: 0, attentionCount: 0 };
 }
 
 function appMetricCard(label, value, note = "") {
@@ -62,7 +62,7 @@ function renderSummaryPanel() {
   const panel = byId("panel-summary");
   if (!panel) return;
   const metrics = overallMetricsForApp();
-  const ym = typeof previousMonthYm === "function" ? previousMonthYm() : "-";
+  const ym = metrics.ym || "-";
   const healthClass = metrics.health === "赤字" ? "danger" : metrics.health === "警戒" ? "attention" : "reflected";
   panel.innerHTML = `
     <article class="panel income-native unified-summary-panel">
@@ -72,12 +72,12 @@ function renderSummaryPanel() {
         <p>${esc(typeof expenseHealthComment === "function" ? expenseHealthComment(metrics.health) : "収入と支出の登録状況を確認してください。")}</p>
       </section>
       <section class="analysis-summary">
-        ${appMetricCard("世帯収入", yen(metrics.income), `対象月 ${ym}`)}
+        ${appMetricCard("世帯収入", yen(metrics.income), `最新月 ${ym}`)}
         ${appMetricCard("支出合計", yen(metrics.expense))}
         ${appMetricCard("貯蓄・投資", yen(metrics.saving))}
         ${appMetricCard("月次余力", yen(metrics.surplus), metrics.health)}
-        ${appMetricCard("固定費率", percent(metrics.fixedRatio))}
         ${appMetricCard("貯蓄率", percent(metrics.savingRatio))}
+        ${appMetricCard("住宅ローン比率", percent(metrics.housingRatio))}
       </section>
     </article>`;
 }

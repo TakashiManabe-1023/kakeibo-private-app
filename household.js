@@ -94,19 +94,104 @@ function externalAliases(item) {
 
 
 function enabledItems() {
-  return master.filter((item) => item.enabled);
+  return master.filter((item) => item.enabled !== false);
+}
+
+const summaryIncomeAddBackItems = [
+  { key: "dbPension", labels: ["確定給付年金本人掛金", "確定給付年金本人拠出"] },
+  { key: "dcPension", labels: ["確定拠出年金本人掛金"] },
+  { key: "commuteReturn", labels: ["通勤交通費戻入"] },
+  { key: "stock", labels: ["持株拠出金"] },
+  { key: "housingSaving", labels: ["持ち家財形貯蓄（非）", "持ち家財形貯蓄(非)", "持ち家財形貯蓄"] },
+  { key: "savings", labels: ["総合預金"] },
+];
+
+function summaryNumber(value) {
+  const normalized = String(value ?? "").replace(/[￥¥,，\s]/g, "");
+  const number = Number(normalized);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function summaryText(value) {
+  return String(value ?? "").normalize("NFKC").replace(/\s+/g, "").toLowerCase();
+}
+
+function summaryPayrollRecords(profile) {
+  if (typeof payrollRecordsForProfile === "function") return payrollRecordsForProfile(profile);
+  return [];
+}
+
+function summaryPayrollValue(record, key, labels = []) {
+  if (!record) return 0;
+  const values = record.values || {};
+  if (Object.prototype.hasOwnProperty.call(values, key)) return summaryNumber(values[key]);
+  const labelKeys = labels.map(summaryText);
+  const found = Object.entries(values).find(([name]) => labelKeys.includes(summaryText(name)));
+  if (found) return summaryNumber(found[1]);
+  if (typeof payrollValue === "function") return summaryNumber(payrollValue(record, key));
+  return 0;
+}
+
+function latestPayrollSummaryYm() {
+  return ["primary", "secondary"]
+    .flatMap((profile) => summaryPayrollRecords(profile).map((record) => record.ym).filter(Boolean))
+    .sort((a, b) => String(a).localeCompare(String(b)))
+    .at(-1) || "";
+}
+
+function latestHouseholdIncome() {
+  const ym = latestPayrollSummaryYm();
+  if (!ym) {
+    const fallbackIncome = summaryNumber(data.totals?.income) || (data.incomes || []).reduce((sum, item) => sum + summaryNumber(item.amount), 0);
+    return { ym: "", income: fallbackIncome, records: [] };
+  }
+  const records = ["primary", "secondary"].map((profile) => ({
+    profile,
+    record: summaryPayrollRecords(profile).find((row) => row.ym === ym),
+  }));
+  const income = records.reduce((profileTotal, { record }) => {
+    if (!record) return profileTotal;
+    const net = summaryPayrollValue(record, "netTotal", ["合計手取額", "手取額", "手取り"]);
+    const addBack = summaryIncomeAddBackItems.reduce((sum, item) => sum + summaryPayrollValue(record, item.key, item.labels), 0);
+    return profileTotal + net + addBack;
+  }, 0);
+  return { ym, income, records };
+}
+
+function itemMonthlyEquivalent(item) {
+  const amount = summaryNumber(item?.monthlyAmount);
+  if (item?.frequency === "yearly") return amount / 12;
+  if (item?.frequency === "bimonthly") return amount / 2;
+  if (item?.frequency === "semiannual") return amount / 6;
+  return amount;
+}
+
+function isExpenseFlow(item) {
+  const flow = summaryText(item?.flow);
+  return item?.flow === "expense" || flow === summaryText("支出");
+}
+
+function isSavingInvestmentFlow(item) {
+  const flow = summaryText(item?.flow);
+  return item?.flow === "saving" || item?.flow === "investment" || flow.includes(summaryText("貯蓄")) || flow.includes(summaryText("投資"));
+}
+
+function isHousingLoanItem(item) {
+  const text = summaryText(String(item?.name || "") + " " + String(item?.detail || ""));
+  const category = summaryText(item?.category);
+  return text.includes(summaryText("住宅ローン")) || category.includes(summaryText("住宅"));
 }
 
 function monthlyExpense() {
-  return enabledItems().filter((item) => item.flow === "expense").reduce((sum, item) => sum + Number(item.monthlyAmount || 0), 0);
+  return enabledItems().filter(isExpenseFlow).reduce((sum, item) => sum + itemMonthlyEquivalent(item), 0);
 }
 
 function monthlySaving() {
-  return enabledItems().filter((item) => item.flow === "saving").reduce((sum, item) => sum + Number(item.monthlyAmount || 0), 0);
+  return enabledItems().filter(isSavingInvestmentFlow).reduce((sum, item) => sum + itemMonthlyEquivalent(item), 0);
 }
 
 function monthlyIncome() {
-  return data.totals.income || data.incomes.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  return latestHouseholdIncome().income;
 }
 
 function rowStatus(item) {
@@ -124,16 +209,19 @@ function percent(value) {
 }
 
 function expenseSummaryMetrics() {
-  const income = monthlyIncome();
-  const expense = monthlyExpense();
-  const saving = monthlySaving();
+  const incomeInfo = latestHouseholdIncome();
+  const income = incomeInfo.income;
+  const expenseItems = enabledItems().filter(isExpenseFlow);
+  const savingItems = enabledItems().filter(isSavingInvestmentFlow);
+  const expense = expenseItems.reduce((sum, item) => sum + itemMonthlyEquivalent(item), 0);
+  const saving = savingItems.reduce((sum, item) => sum + itemMonthlyEquivalent(item), 0);
   const surplus = income - expense - saving;
-  const fixed = enabledItems().filter((item) => item.nature === "fixed" && item.flow === "expense").reduce((sum, item) => sum + Number(item.monthlyAmount || 0), 0);
-  const housing = enabledItems().filter((item) => item.category === "住宅費").reduce((sum, item) => sum + Number(item.monthlyAmount || 0), 0);
+  const fixed = expenseItems.filter((item) => item.nature === "fixed").reduce((sum, item) => sum + itemMonthlyEquivalent(item), 0);
+  const housing = expenseItems.filter(isHousingLoanItem).reduce((sum, item) => sum + itemMonthlyEquivalent(item), 0);
   const expenseRatio = income ? expense / income : 0;
   const fixedRatio = income ? fixed / income : 0;
   const savingRatio = income ? saving / income : 0;
-  const housingRatio = income ? housing / income : Number(data.totals?.housingLoanRatio || 0);
+  const housingRatio = income ? housing / income : 0;
   const pendingCount =
     typeof buildUpdateCandidates === "function"
       ? buildUpdateCandidates().filter((candidate) => candidateDisplayStatus(candidate) === "pending").length
@@ -141,7 +229,7 @@ function expenseSummaryMetrics() {
   const attentionItems = enabledItems().filter((item) => expenseAttentionReasons(item, income).length);
   const attentionCount = attentionItems.length;
   const health = surplus < 0 ? "赤字" : surplus < income * 0.08 ? "警戒" : "健全";
-  return { income, expense, saving, surplus, expenseRatio, fixed, fixedRatio, savingRatio, housing, housingRatio, pendingCount, attentionCount, health };
+  return { ym: incomeInfo.ym, income, expense, saving, surplus, expenseRatio, fixed, fixedRatio, savingRatio, housing, housingRatio, pendingCount, attentionCount, health };
 }
 
 function expenseAttentionReasons(item, income = monthlyIncome()) {
@@ -188,9 +276,8 @@ function renderExpenseSummary() {
     ["支出合計", yen(metrics.expense), "支出として登録されている有効項目の月額合計です。"],
     ["貯蓄・投資合計", yen(metrics.saving), "貯蓄・投資として登録されている有効項目の月額合計です。"],
     ["月次余力", yen(metrics.surplus), "世帯収入 - 支出合計 - 貯蓄・投資合計です。"],
-    ["固定費率", percent(metrics.fixedRatio), "固定費を世帯収入で割った割合です。"],
     ["貯蓄率", percent(metrics.savingRatio), "貯蓄・投資合計を世帯収入で割った割合です。"],
-    ["住宅費率", percent(metrics.housingRatio), "住宅費を世帯収入で割った割合です。"],
+    ["住宅ローン比率", percent(metrics.housingRatio), "住宅ローンの月額換算額を世帯収入で割った割合です。"],
     ["更新確認", `${metrics.pendingCount}件`, "外部データなどから確認できるメンテナンス通知の件数です。"],
     ["要確認項目", `${metrics.attentionCount}件`, "金額未設定、高額項目の情報不足、編集中など確認したい項目です。"],
   ]
@@ -206,8 +293,7 @@ function renderExpenseSummary() {
       <h4>構成比</h4>
       ${ratioBar("支出合計 / 世帯収入", metrics.expenseRatio, "支出合計を世帯収入で割った割合です。")}
       ${ratioBar("貯蓄・投資 / 世帯収入", metrics.savingRatio, "貯蓄・投資合計を世帯収入で割った割合です。")}
-      ${ratioBar("固定費 / 世帯収入", metrics.fixedRatio, "固定費を世帯収入で割った割合です。")}
-      ${ratioBar("住宅費 / 世帯収入", metrics.housingRatio, "住宅費を世帯収入で割った割合です。")}
+      ${ratioBar("住宅ローン / 世帯収入", metrics.housingRatio, "住宅ローンの月額換算額を世帯収入で割った割合です。")}
     </section>
     <div class="expense-summary-actions">
       <button type="button" data-summary-tab="master">入力を見る</button>
